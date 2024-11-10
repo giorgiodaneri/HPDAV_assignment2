@@ -137,13 +137,13 @@ class ScatterplotD3 {
             .attr("cx", d => x(d[xAttribute]))
             .attr("cy", d => y(d[yAttribute]))
             .attr("fill", d => colorScale(d[colorAttribute])) // Color based on WindSpeed
-            .attr("opacity", 0.5) // Lower opacity for overlapping points
+            .attr("opacity", 0.4) // Lower opacity for overlapping points
             .on("mouseover", function(event, d) {
                 d3.select(this).style("fill", "red").attr("opacity", 1.0);
                 controllerMethods.handleOnMouseEnter(d);
             })
             .on("mouseout", function(event, d) {
-                d3.select(this).style("fill", colorScale(d[colorAttribute])).attr("opacity", 0.5);
+                d3.select(this).style("fill", colorScale(d[colorAttribute])).attr("opacity", 0.4);
                 controllerMethods.handleOnMouseLeave();
             })
             .on("click", function(event, d) {
