@@ -2,6 +2,8 @@ import './App.css';
 import { useEffect} from 'react';
 import { useDispatch } from 'react-redux';
 import { getSeoulBikeData } from './redux/DataSetSlice';
+import ScatterplotContainer from './components/scatterplot/ScatterplotContainer';
+import ParallelCoordinatesContainer from './components/parallel_coordinates/ParallelCoordinatesContainer';
 
 // here import other dependencies
 
@@ -13,18 +15,22 @@ function App() {
   })
 
   // called once the component did mount
-  useEffect(()=>{
-    // initialize the data from file
+  useEffect(() => {
     dispatch(getSeoulBikeData());
-  },[])
+  }, [dispatch]);
 
   return (
     <div className="App">
         {console.log("App rendering")}
         <div id="view-container" className="row">
-          {/*<ScatterplotContainer/>*/}
-          {/* <YourVisContainer/> */}
+          <div id="scatterplot-container" className="scatterplotDivContainer">
+            {<ScatterplotContainer/>}
+          </div>
+          <div id="parallel-coords-container" className="parallelCoordinatesDivContainer">
+            {<ParallelCoordinatesContainer/>}
+          </div>
         </div>
+        
     </div>
   );
 }
