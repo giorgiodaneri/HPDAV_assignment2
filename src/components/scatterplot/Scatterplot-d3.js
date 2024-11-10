@@ -129,7 +129,7 @@ class ScatterplotD3 {
             .style("font-size", "14px");
 
         // Create scatterplot points
-        svg.selectAll(".dot")
+        const circles = svg.selectAll(".dot")
             .data(data)
             .enter().append("circle")
             .attr("class", "dot")
@@ -149,6 +149,47 @@ class ScatterplotD3 {
             .on("click", function(event, d) {
                 controllerMethods.handleOnClick(d);
             });
+
+    // 2D Brushing functionality
+    const brush = d3.brush()
+    .extent([[0, 0], [width, height]]) // Define brushable area
+    .on("start", brushed)
+    .on("brush", brushed)
+    .on("end", brushed);
+
+    svg.append("g")
+        .attr("class", "brush")
+        .call(brush);
+
+    function brushed(event) {
+        if (event.selection) {
+            // Get the selected area
+            const [[x0, y0], [x1, y1]] = event.selection;
+
+            // Update the selected points
+            circles.classed("selected", function(d) {
+                const cx = x(d[xAttribute]);
+                const cy = y(d[yAttribute]);
+
+                // If the circle is inside the brushed area, change its color to red
+                if (x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1) {
+                    d3.select(this).attr("fill", "red").attr("opacity", 1.0);
+                } else {
+                    d3.select(this).attr("fill", colorScale(d[colorAttribute])).attr("opacity", 0.4); // Reset color if outside
+                }
+            });
+
+            // Optional: You can pass the selected data back to the controller or parent component
+            const selectedData = data.filter(d => {
+                const cx = x(d[xAttribute]);
+                const cy = y(d[yAttribute]);
+                return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;
+            });
+
+            // Call controller method to update the selected data
+            controllerMethods.handleOnBrush(selectedData);
+        }
+    }
 
         this.svg.append("defs")
             .append("marker")

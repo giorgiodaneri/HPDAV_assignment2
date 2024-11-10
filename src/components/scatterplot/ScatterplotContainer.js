@@ -6,7 +6,7 @@ import {useSelector} from 'react-redux'
 
 // TODO: import action methods from reducers
 
-function ScatterplotContainer({ setHoveredData }) {
+function ScatterplotContainer({ setHoveredData, brushedData }) {
     const data = useSelector(state => state.dataSet);
     const xAttribute = "Temperature";
     const yAttribute = "RentedBikeCount";
@@ -35,7 +35,9 @@ function ScatterplotContainer({ setHoveredData }) {
             scatterplotD3.renderScatterplot(data, xAttribute, yAttribute, "WindSpeed", "Visibility", {
                 handleOnClick: (cellData) => console.log('Clicked:', cellData),
                 handleOnMouseEnter: (cellData) => setHoveredData(cellData),
-                handleOnMouseLeave: () => setHoveredData(null)
+                handleOnMouseLeave: () => setHoveredData(null),
+                handleOnBrush: (selectedData) => {
+                    console.log("Brushed Data:", selectedData);}
             });
         }
     }, [data]); // Re-render whenever data changes
