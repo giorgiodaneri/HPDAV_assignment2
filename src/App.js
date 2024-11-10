@@ -30,7 +30,6 @@ function App() {
             {<ParallelCoordinatesContainer/>}
           </div>
         </div>
-        
     </div>
   );
 }

@@ -4,15 +4,15 @@ class ParallelCoordinates {
     constructor(container, data) {
         this.container = container;
         this.data = data;
-        this.margin = { top: 30, right: 40, bottom: 10, left: 40 };
+        this.margin = { top: 30, right: 40, bottom: 25, left: 40 };
         this.width = 1300 - this.margin.left - this.margin.right;
-        this.height = 500 - this.margin.top - this.margin.bottom;
+        this.height = 400 - this.margin.top - this.margin.bottom;
 
         this.drawParallelCoordinates();
     }
 
     drawParallelCoordinates() {
-        const attributes = ["RentedBikeCount", "Temperature", "SolarRadiation"];
+        const attributes = ["RentedBikeCount", "Temperature", "Rainfall"];
 
         // Define the color scale using the Turbo colormap
         const colorScale = d3.scaleSequential(d3.interpolatePlasma)
@@ -31,7 +31,7 @@ class ParallelCoordinates {
         const yScales = {};
         attributes.forEach(attr => {
             // if the attribute is RentedBikeCount, invert the scale
-            if (attr === "SolarRadiation") {
+            if (attr === "None") {
                 yScales[attr] = d3.scaleLinear()
                     .domain(d3.extent(this.data, d => d[attr]))
                     .range([0, this.height]);
@@ -59,8 +59,23 @@ class ParallelCoordinates {
                 d3.select(this).call(d3.axisLeft(yScales[d]));
             });
 
+        // Draw the axis labels below each axis
+        svg.selectAll(".axis-label")
+        .data(attributes)
+        .enter()
+        .append("text")
+        .attr("class", "axis-label")
+        .attr("x", d => xScale(d))
+        .attr("y", this.height + 20)  // Position the labels below the axes
+        .attr("text-anchor", "middle")
+        .style("font-size", "14px")
+        .text(d => d);  // Display the attribute name as the label
+
+
         // Line generator for each data point
         const lineGenerator = d3.line()
+            // Curved lines to bundle edges together
+            .curve(d3.curveBasis)  
             .x((d, i) => xScale(attributes[i]))
             .y((d, i) => yScales[attributes[i]](d));
 

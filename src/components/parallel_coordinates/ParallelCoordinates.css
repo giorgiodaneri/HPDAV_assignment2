@@ -1,0 +1,31 @@
+.parallelCoordinatesContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.parallelCoordinatesDivContainer {
+  width: 100%;
+  height: 100%;
+  margin-bottom: 0px;
+  border: 1px solid #ccc;
+}
+
+svg {
+    width: 100%;
+    height: 100%;
+}
+
+.axis text {
+    font: 10px sans-serif;
+}
+
+.brush rect {
+    fill: none;
+    pointer-events: all;
+    stroke: #000;
+    stroke-width: 1.5px;
+}

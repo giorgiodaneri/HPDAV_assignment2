@@ -13,7 +13,7 @@ class ScatterplotD3 {
     }
 
     renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, controllerMethods) {
-        const margin = { top: 20, right: 20, bottom: 30, left: 40 };
+        const margin = { top: 20, right: 20, bottom: 0, left: 65 };
         const width = this.size.width - margin.left - margin.right;
         const height = this.size.height - margin.top - margin.bottom;
 
@@ -110,6 +110,23 @@ class ScatterplotD3 {
                 .attr("stroke-width", 2)                 // Make axis line thicker
                 .attr("stroke", "black"));               // Set axis line color
 
+        // Draw the axis labels below the x-axis and to the left of the y-axis
+        svg.append("text")
+            .attr("class", "x label")
+            .attr("text-anchor", "end")
+            .attr("x", width)
+            .attr("y", height + 30)
+            .text(xAttribute)
+            .style("font-size", "14px");
+
+        svg.append("text")
+            .attr("class", "y label")
+            .attr("text-anchor", "end")
+            .attr("y", - 55)
+            .attr("dy", ".75em")
+            .attr("transform", "rotate(-90)")
+            .text(yAttribute)
+            .style("font-size", "14px");
 
         // Create scatterplot points
         svg.selectAll(".dot")
