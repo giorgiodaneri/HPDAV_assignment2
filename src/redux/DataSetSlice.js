@@ -18,9 +18,29 @@ export const getSeoulBikeData = createAsyncThunk('seoulBikeData/fetchData', asyn
 
 export const dataSetSlice = createSlice({
   name: 'dataSet',
-  initialState: [],
+  initialState: {
+    data: [], // Initial empty array for data
+    selectedAxes: { xAxis: 'Temperature', yAxis: 'RentedBikeCount' } // Default selected axes
+  },
+  
   reducers: {
-      // add reducer if needed
+    setData: (state, action) => {
+      state.data = action.payload;
+    },
+    updateBrushedData: (state, action) => {
+      const selectedData = action.payload.map(cellData => {
+        if (cellData.index === action.payload.index) {
+        return {...cellData,selected:!cellData.selected};
+        } else {
+        return cellData;
+        }
+    })
+      // state.brushedData = action.payload; // Update brushed data
+      return {...state, selectedData};
+    },
+    setSelectedAxes: (state, action) => {
+      state.selectedAxes = action.payload;
+    }
   },
   extraReducers: builder => {
     builder.addCase(getSeoulBikeData.fulfilled, (state, action) => {
@@ -31,6 +51,6 @@ export const dataSetSlice = createSlice({
 })
 
 // Action creators are generated for each case reducer function
-export const { updateSelectedItem } = dataSetSlice.actions
+export const { setData, updateBrushedData } = dataSetSlice.actions;
 
-export default dataSetSlice.reducer
+export default dataSetSlice.reducer;

@@ -205,8 +205,8 @@ class ScatterplotD3 {
             .style("fill", "black");              // Color of the arrowhead
     }
 
-    clear() {
-        this.svg.selectAll("*").remove();
+    clear = function () {
+        d3.select(this.el).selectAll("*").remove();
     }
 }
 

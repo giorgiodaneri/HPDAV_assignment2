@@ -1,10 +1,9 @@
 import * as d3 from 'd3';
 
 class ParallelCoordinates {
-    constructor(container, data, brushedData) {
+    constructor(container, data) {
         this.container = container;
         this.data = data;
-        this.brushedData = brushedData || [];
         this.margin = { top: 30, right: 40, bottom: 25, left: 40 };
         this.width = 1300 - this.margin.left - this.margin.right;
         this.height = 400 - this.margin.top - this.margin.bottom;
@@ -88,16 +87,8 @@ class ParallelCoordinates {
             .attr("class", "line")
             .attr("d", d => lineGenerator(attributes.map(attr => d[attr])))
             .style("fill", "none")
-            .style("stroke", d => {
-                // Check if the line is in the brushed data
-                if (this.brushedData.includes(d)) {
-                    return "red";  // Highlight brushed data in red
-                } else {
-                    return colorScale(d.Humidity);  // Set the stroke color based on Humidity
-                }
-            })
-            .style("opacity", d => this.brushedData.includes(d) ? 1.0 : 0.02);  // Full opacity for brushed lines, low opacity for others
-   
+            .style("stroke", d => colorScale(d.Humidity))  // Set the stroke color based on SolarRadiation
+            .style("opacity", 0.02);
     }
 }
 
