@@ -16,16 +16,26 @@ export const getSeoulBikeData = createAsyncThunk('seoulBikeData/fetchData', asyn
   return filteredData;
 })
 
+function generateUpdatedPlot(dataset, xAxis, yAxis)
+ {
+  console.log("generateUpdatedPlot with x:", xAxis, "y:", yAxis);
+  return {xAxis : xAxis, yAxis : yAxis};
+ }
 export const dataSetSlice = createSlice({
+  // name of the slice
   name: 'dataSet',
   initialState: {
     data: [], // Initial empty array for data
-    selectedAxes: { xAxis: 'Temperature', yAxis: 'RentedBikeCount' } // Default selected axes
+    // selectedAxes: { xAxis: 'Temperature', yAxis: 'RentedBikeCount' } // Default selected axes
+    xAxis : "Temperature",
+    yAxis : "RentedBikeCount"
   },
   
   reducers: {
     setData: (state, action) => {
       state.data = action.payload;
+      state.xAxis = action.payload.xAxis;
+      state.yAxis = action.payload.yAxis;
     },
     updateBrushedData: (state, action) => {
       const selectedData = action.payload.map(cellData => {
@@ -38,8 +48,11 @@ export const dataSetSlice = createSlice({
       // state.brushedData = action.payload; // Update brushed data
       return {...state, selectedData};
     },
-    setSelectedAxes: (state, action) => {
-      state.selectedAxes = action.payload;
+    generateFromConfig: (state, action) => {
+      // print the selectedAxes to console
+      console.log("generateFromConfig payload:", action.payload.xAxis, action.payload.yAxis);
+      return {...state, xAxis: action.payload.xAxis, yAxis: action.payload.yAxis};
+      // return generateUpdatedPlot(state.data, action.payload.selectedAxes.xAxis, action.payload.selectedAxes.yAxis);
     }
   },
   extraReducers: builder => {
@@ -51,6 +64,6 @@ export const dataSetSlice = createSlice({
 })
 
 // Action creators are generated for each case reducer function
-export const { setData, updateBrushedData } = dataSetSlice.actions;
+export const { setData, updateBrushedData, generateFromConfig } = dataSetSlice.actions;
 
 export default dataSetSlice.reducer;

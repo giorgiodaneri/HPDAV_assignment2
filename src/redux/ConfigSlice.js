@@ -3,17 +3,18 @@ import { createSlice } from '@reduxjs/toolkit'
 export const configSlice = createSlice({
   name: 'config',
   initialState: {
-    nbRows: 4,
-    nbCols: 4,
+    xAxis : "Temperature",
+    yAxis : "RentedBikeCount",
   },
   reducers: {
-    updateNbRowsAndCols: (state, action) => {
-      return {...state, nbRows:action.payload.nbRows, nbCols:action.payload.nbCols};
+    updateAxes: (state, action) => {
+      console.log("updateAxes:", action.payload);
+      return {...state, xAxis:action.payload.xAxis, yAxis:action.payload.yAxis};
     },
   }
 })
 
 // Action creators are generated for each case reducer function
-export const { updateNbRowsAndCols} = configSlice.actions
+export const { updateAxes } = configSlice.actions
 
 export default configSlice.reducer

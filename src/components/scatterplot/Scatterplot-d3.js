@@ -17,6 +17,9 @@ class ScatterplotD3 {
         const width = this.size.width - margin.left - margin.right;
         const height = this.size.height - margin.top - margin.bottom;
 
+        // print to console values of xAttribute, yAttribute
+        console.log("Scatter plot xAttribute:", xAttribute, "yAttribute:", yAttribute);
+
         const x = d3.scaleLinear().range([0, width]);
         const y = d3.scaleLinear().range([height, 0]);
 

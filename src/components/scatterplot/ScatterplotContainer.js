@@ -7,15 +7,20 @@ import { updateBrushedData } from '../../redux/DataSetSlice';
 
 function ScatterplotContainer({ setHoveredData, brushedData }) {
     const data = useSelector(state => state.dataSet);
+    const xAxis = useSelector((state) => state.dataSet.xAxis);
+    const yAxis = useSelector((state) => state.dataSet.yAxis);
+    // print to console 
+    console.log("ScatterplotContainer xAxis:", xAxis, "yAxis:", yAxis); 
     const dispatch = useDispatch();
-    const xAttribute = "Temperature";
-    const yAttribute = "RentedBikeCount";
+    // if xAxis and yAxis are empty, set them to default values
+    const xAttribute = xAxis || "Temperature";
+    const yAttribute = yAxis || "RentedBikeCount";
 
     const divContainerRef = useRef(null);
     const scatterplotD3Ref = useRef(null);
 
     const getCharSize = function() {
-        return { width: 1300, height: 400 };
+        return { width: 1000, height: 400 };
     }
 
     // did mount
