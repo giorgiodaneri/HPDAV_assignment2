@@ -5,8 +5,11 @@ class ParallelCoordinates {
         this.container = container;
         this.data = data;
         this.margin = { top: 30, right: 40, bottom: 25, left: 40 };
-        this.width = 1300 - this.margin.left - this.margin.right;
-        this.height = 400 - this.margin.top - this.margin.bottom;
+
+        // Get the width and height from the container's bounding box
+        const containerRect = container.getBoundingClientRect();
+        this.width = containerRect.width - this.margin.left - this.margin.right;
+        this.height = containerRect.height - this.margin.top - this.margin.bottom;
 
         this.drawParallelCoordinates();
     }
@@ -16,8 +19,10 @@ class ParallelCoordinates {
 
         // Define the color scale using the Turbo colormap
         const colorScale = d3.scaleSequential(d3.interpolatePlasma)
-        .domain(d3.extent(this.data, d => d.Humidity)); // Use SolarRadiation to define color scale domain
-    
+            .domain(d3.extent(this.data, d => d.Humidity));
+
+        // Remove any existing SVG before appending a new one
+        d3.select(this.container).selectAll("svg").remove();
 
         // Append the SVG for the parallel coordinates
         const svg = d3.select(this.container)
@@ -30,16 +35,9 @@ class ParallelCoordinates {
         // Set up scales for each attribute
         const yScales = {};
         attributes.forEach(attr => {
-            // if the attribute is RentedBikeCount, invert the scale
-            if (attr === "None") {
-                yScales[attr] = d3.scaleLinear()
-                    .domain(d3.extent(this.data, d => d[attr]))
-                    .range([0, this.height]);
-            } else {
             yScales[attr] = d3.scaleLinear()
                 .domain(d3.extent(this.data, d => d[attr]))
-                .range([this.height, 0]);
-            }
+                .range(attr === "None" ? [0, this.height] : [this.height, 0]);
         });
 
         // X scale for attribute positions
@@ -61,21 +59,19 @@ class ParallelCoordinates {
 
         // Draw the axis labels below each axis
         svg.selectAll(".axis-label")
-        .data(attributes)
-        .enter()
-        .append("text")
-        .attr("class", "axis-label")
-        .attr("x", d => xScale(d))
-        .attr("y", this.height + 20)  // Position the labels below the axes
-        .attr("text-anchor", "middle")
-        .style("font-size", "14px")
-        .text(d => d);  // Display the attribute name as the label
-
+            .data(attributes)
+            .enter()
+            .append("text")
+            .attr("class", "axis-label")
+            .attr("x", d => xScale(d))
+            .attr("y", this.height + 20)
+            .attr("text-anchor", "middle")
+            .style("font-size", "14px")
+            .text(d => d);
 
         // Line generator for each data point
         const lineGenerator = d3.line()
-            // Curved lines to bundle edges together
-            .curve(d3.curveBasis)  
+            .curve(d3.curveBasis)
             .x((d, i) => xScale(attributes[i]))
             .y((d, i) => yScales[attributes[i]](d));
 
@@ -87,7 +83,7 @@ class ParallelCoordinates {
             .attr("class", "line")
             .attr("d", d => lineGenerator(attributes.map(attr => d[attr])))
             .style("fill", "none")
-            .style("stroke", d => colorScale(d.Humidity))  // Set the stroke color based on SolarRadiation
+            .style("stroke", d => colorScale(d.Humidity))
             .style("opacity", 0.02);
     }
 }

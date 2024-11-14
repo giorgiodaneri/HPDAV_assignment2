@@ -52,7 +52,7 @@ export const dataSetSlice = createSlice({
       // print the selectedAxes to console
       console.log("generateFromConfig payload:", action.payload.xAxis, action.payload.yAxis);
       return {...state, xAxis: action.payload.xAxis, yAxis: action.payload.yAxis};
-      // return generateUpdatedPlot(state.data, action.payload.selectedAxes.xAxis, action.payload.selectedAxes.yAxis);
+      return generateUpdatedPlot(state.data, action.payload.selectedAxes.xAxis, action.payload.selectedAxes.yAxis);
     }
   },
   extraReducers: builder => {

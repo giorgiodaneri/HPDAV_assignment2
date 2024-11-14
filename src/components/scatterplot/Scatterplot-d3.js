@@ -6,210 +6,103 @@ class ScatterplotD3 {
         this.svg = d3.select(container).append("svg");
     }
 
+    // Dynamically set the SVG dimensions to fit the container size
     create({ size }) {
         this.size = size;
-        this.svg.attr("width", this.size.width)
-            .attr("height", this.size.height);
+        this.svg.attr("width", size.width).attr("height", size.height);
     }
 
     renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, controllerMethods) {
-        const margin = { top: 20, right: 20, bottom: 0, left: 65 };
+        const margin = { top: 40, right: 40, bottom: 40, left: 85 };
         const width = this.size.width - margin.left - margin.right;
         const height = this.size.height - margin.top - margin.bottom;
 
-        // print to console values of xAttribute, yAttribute
-        console.log("Scatter plot xAttribute:", xAttribute, "yAttribute:", yAttribute);
+        // Clear previous content
+        this.svg.selectAll("*").remove();
 
         const x = d3.scaleLinear().range([0, width]);
         const y = d3.scaleLinear().range([height, 0]);
 
-        // Create a color scale based on WindSpeed (may change this to a generic variable later on)
-        const createColorScale = (data) => {
-            const windSpeeds = data.map(d => d.WindSpeed);
-            const minWindSpeed = d3.min(windSpeeds);
-            const maxWindSpeed = d3.max(windSpeeds);
-        
-            // Create a color scale based on WindSpeed
-            return d3.scaleSequential(d3.interpolateTurbo)
-                .domain([minWindSpeed, maxWindSpeed]); // Adjust the color range here
-        };
-        
-        // Create a size scale based on Visibility
-        const createSizeScale = (data) => {
-            const visibilityValues = data.map(d => d.Visibility);
-            const minVisibility = d3.min(visibilityValues);
-            const maxVisibility = d3.max(visibilityValues);
-        
-            // Create a scale for circle radius based on Visibility
-            return d3.scaleLinear()
-                .domain([minVisibility, maxVisibility])  // Input: Visibility values
-                .range([2, 6]);                         // Output: Radius size range
-        };
+        // Define color and size scales based on data attributes
+        const colorScale = d3.scaleSequential(d3.interpolateTurbo)
+            .domain(d3.extent(data, d => d[colorAttribute]));
+        const sizeScale = d3.scaleLinear()
+            .domain(d3.extent(data, d => d[sizeAttribute]))
+            .range([2, 6]);
 
         const svg = this.svg.append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+            .attr("transform", `translate(${margin.left},${margin.top})`);
 
-        // Set the domains of the axes based on the data
-        x.domain([
-            d3.min(data, d => d[xAttribute]) - 1,  // Add a little padding
-            d3.max(data, d => d[xAttribute]) + 1   // Add a little padding
-        ]);
+        // Set domains for axes
+        x.domain(d3.extent(data, d => d[xAttribute])).nice();
+        y.domain(d3.extent(data, d => d[yAttribute])).nice();
 
-        y.domain([
-            d3.min(data, d => d[yAttribute]) - 10,  // Add a little padding
-            d3.max(data, d => d[yAttribute]) + 10   // Add a little padding
-        ]);
-
-        // Define color scale based on WindSpeed
-        const colorScale = createColorScale(data);
-
-        // Define size scale based on Visibility
-        const sizeScale = createSizeScale(data);
-
-        const defs = this.svg.append("defs");
-
-        // Right-pointing arrow for the x-axis
-        defs.append("marker")
-            .attr("id", "arrow-x")
-            .attr("viewBox", "0 0 10 10")
-            .attr("refX", 0)  // Position the arrow at the end of the x-axis line
-            .attr("refY", 10)
-            .attr("markerWidth", 6)
-            .attr("markerHeight", 6)
-            .attr("orient", "auto-start")  // No rotation needed for x-axis
-            .append("path")
-            .attr("d", "M 0 0 L 10 5 L 0 10 Z")
-            .style("fill", "black");
-        
-        // Upward-pointing arrow for the y-axis
-        defs.append("marker")
-            .attr("id", "arrow-y")
-            .attr("viewBox", "0 0 10 10")
-            .attr("refX", 0)
-            .attr("refY", 10)
-            .attr("markerWidth", 6)
-            .attr("markerHeight", 6)
-            .attr("orient", "auto-start")  // Rotates to point upward for y-axis
-            .append("path")
-            .attr("d", "M 0 10 L 5 0 L 10 10 Z")
-            .style("fill", "black");
-
-        // Create X and Y axes
+        // X and Y axes with labels
         svg.append("g")
-            .attr("class", "x axis")
-            .attr("transform", "translate(0," + height + ")")
+            .attr("transform", `translate(0,${height})`)
             .call(d3.axisBottom(x))
-            .call(g => g.select(".domain")
-                .attr("marker-end", "url(#arrow-x)")       // Add arrow at the end
-                .attr("stroke-width", 2)                 // Make axis line thicker
-                .attr("stroke", "black"));               // Set axis line color
-
-
-        svg.append("g")
-            .attr("class", "y axis")
-            .call(d3.axisLeft(y))
-            .call(g => g.select(".domain")
-                .attr("marker-end", "url(#arrow-y)")       // Add arrow at the end
-                .attr("stroke-width", 2)                 // Make axis line thicker
-                .attr("stroke", "black"));               // Set axis line color
-
-        // Draw the axis labels below the x-axis and to the left of the y-axis
-        svg.append("text")
-            .attr("class", "x label")
-            .attr("text-anchor", "end")
+            .append("text")
+            .attr("fill", "black")
             .attr("x", width)
-            .attr("y", height + 30)
+            .attr("y", 25)
+            .attr("text-anchor", "end")
             .text(xAttribute)
             .style("font-size", "14px");
 
-        svg.append("text")
-            .attr("class", "y label")
-            .attr("text-anchor", "end")
-            .attr("y", - 55)
-            .attr("dy", ".75em")
+        svg.append("g")
+            .call(d3.axisLeft(y))
+            .append("text")
+            .attr("fill", "black")
             .attr("transform", "rotate(-90)")
+            .attr("y", -50)
+            .attr("dy", "1em")
+            .attr("text-anchor", "end")
             .text(yAttribute)
             .style("font-size", "14px");
 
-        // Create scatterplot points
-        const circles = svg.selectAll(".dot")
+        // Scatterplot circles
+        svg.selectAll(".dot")
             .data(data)
             .enter().append("circle")
             .attr("class", "dot")
-            .attr("r", d => sizeScale(d[sizeAttribute])) // Radius based on Visibility
+            .attr("r", d => sizeScale(d[sizeAttribute]))
             .attr("cx", d => x(d[xAttribute]))
             .attr("cy", d => y(d[yAttribute]))
-            .attr("fill", d => colorScale(d[colorAttribute])) // Color based on WindSpeed
-            .attr("opacity", 0.4) // Lower opacity for overlapping points
+            .attr("fill", d => colorScale(d[colorAttribute]))
+            .attr("opacity", 0.6)
             .on("mouseover", function(event, d) {
-                d3.select(this).style("fill", "red").attr("opacity", 1.0);
+                d3.select(this).attr("fill", "red").attr("opacity", 1.0);
                 controllerMethods.handleOnMouseEnter(d);
             })
             .on("mouseout", function(event, d) {
-                d3.select(this).style("fill", colorScale(d[colorAttribute])).attr("opacity", 0.4);
+                d3.select(this).attr("fill", colorScale(d[colorAttribute])).attr("opacity", 0.6);
                 controllerMethods.handleOnMouseLeave();
             })
             .on("click", function(event, d) {
                 controllerMethods.handleOnClick(d);
             });
 
-    // 2D Brushing functionality
-    const brush = d3.brush()
-    .extent([[0, 0], [width, height]]) // Define brushable area
-    .on("start", brushed)
-    .on("brush", brushed)
-    .on("end", brushed);
+        // Brushing functionality
+        const brush = d3.brush()
+            .extent([[0, 0], [width, height]])
+            .on("start brush end", event => {
+                const selection = event.selection;
+                if (!selection) return;
 
-    svg.append("g")
-        .attr("class", "brush")
-        .call(brush);
-
-    function brushed(event) {
-        if (event.selection) {
-            // Get the selected area
-            const [[x0, y0], [x1, y1]] = event.selection;
-
-            // Update the selected points
-            circles.classed("selected", function(d) {
-                const cx = x(d[xAttribute]);
-                const cy = y(d[yAttribute]);
-
-                // If the circle is inside the brushed area, change its color to red
-                if (x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1) {
-                    d3.select(this).attr("fill", "red").attr("opacity", 1.0);
-                } else {
-                    d3.select(this).attr("fill", colorScale(d[colorAttribute])).attr("opacity", 0.4); // Reset color if outside
-                }
+                const [[x0, y0], [x1, y1]] = selection;
+                const selectedData = data.filter(d => {
+                    const cx = x(d[xAttribute]);
+                    const cy = y(d[yAttribute]);
+                    return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;
+                });
+                controllerMethods.handleOnBrush(selectedData);
             });
 
-            // Optional: You can pass the selected data back to the controller or parent component
-            const selectedData = data.filter(d => {
-                const cx = x(d[xAttribute]);
-                const cy = y(d[yAttribute]);
-                return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;
-            });
-
-            // Call controller method to update the selected data
-            controllerMethods.handleOnBrush(selectedData);
-        }
+        svg.append("g").attr("class", "brush").call(brush);
     }
 
-        this.svg.append("defs")
-            .append("marker")
-            .attr("id", "arrow")
-            .attr("viewBox", "0 0 10 10")
-            .attr("refX", 5)
-            .attr("refY", 5)
-            .attr("markerWidth", 6)
-            .attr("markerHeight", 6)
-            .attr("orient", "auto-start-reverse")  // Ensures correct orientation for both axes
-            .append("path")
-            .attr("d", "M 0 0 L 10 5 L 0 10 Z")  // Triangle shape for arrow
-            .style("fill", "black");              // Color of the arrowhead
-    }
-
-    clear = function () {
-        d3.select(this.el).selectAll("*").remove();
+    clear() {
+        this.svg.selectAll("*").remove();
     }
 }
 

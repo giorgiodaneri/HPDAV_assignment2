@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { updateAxes } from "../../redux/ConfigSlice";
-import { getSeoulBikeData, generateFromConfig } from "../../redux/DataSetSlice";
+import { getSeoulBikeData, generateFromConfig, setData } from "../../redux/DataSetSlice";
 
 function ControlBar() {
     const dispatch = useDispatch();
@@ -58,6 +58,7 @@ function ControlBar() {
 
         console.log("Form JSON:", formJSON);
         dispatch(generateFromConfig({ xAxis: x, yAxis: y }));
+        // dispatch(getSeoulBikeData());
     }
 
     return (
