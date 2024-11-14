@@ -6,56 +6,52 @@ import { useSelector, useDispatch } from 'react-redux';
 import { updateBrushedData } from '../../redux/DataSetSlice';
 
 function ScatterplotContainer({ setHoveredData, brushedData }) {
-    const data = useSelector(state => state.dataSet);
-    const xAxis = useSelector(state => state.dataSet.xAxis);
-    const yAxis = useSelector(state => state.dataSet.yAxis);
+    const data = useSelector((state) => state.dataSet);
+    const xAxis = useSelector((state) => state.config.xAxis);  // Updated: Retrieve xAxis from config
+    const yAxis = useSelector((state) => state.config.yAxis);  // Updated: Retrieve yAxis from config
     const dispatch = useDispatch();
-
-    const xAttribute = xAxis || "Temperature";
-    const yAttribute = yAxis || "RentedBikeCount";
 
     const divContainerRef = useRef(null);
     const scatterplotD3Ref = useRef(null);
 
-    // Resize handler to adapt the scatter plot size to the container's dimensions
-    const updateChartSize = () => {
-        const container = divContainerRef.current;
-        return {
-            width: container.offsetWidth,
-            height: container.offsetHeight
-        };
-    };
-
-    // Initialize and create the scatter plot
+    const getCharSize = function(){
+        // getting size from parent item
+        let width;// = 800;
+        let height;// = 100;
+        if(divContainerRef.current!==undefined){
+            width=divContainerRef.current.offsetWidth;
+            // width = '100%';
+            height=divContainerRef.current.offsetHeight;
+            // height = '100%';
+        }
+        return {width:width,height:height};
+    }
+    // Initial scatterplot setup
     useEffect(() => {
         const scatterplotD3 = new ScatterplotD3(divContainerRef.current);
-        scatterplotD3.create({ size: updateChartSize() });
+        scatterplotD3.create({ size: getCharSize() });
         scatterplotD3Ref.current = scatterplotD3;
 
-        // Clear on unmount
-        return () => scatterplotD3.clear();
+        return () => scatterplotD3Ref.current.clear();
     }, []);
 
-    // Update scatter plot data or dimensions on relevant state changes
+    // Render scatterplot with selected x and y axes when data or axes change
     useEffect(() => {
-        console.log('Data scatterplotContainer:', data);
-        if (data && data.length > 0) {
-            // Clear any existing SVG elements in the container
-            scatterplotD3Ref.current.innerHTML = '';   
+        if (data && data.length > 0 && xAxis && yAxis) {
             const scatterplotD3 = scatterplotD3Ref.current;
-            const handleOnBrush = selectedData => dispatch(updateBrushedData(selectedData));
-
-            // Re-render the scatter plot with new data and attributes
-            scatterplotD3.renderScatterplot(data, xAttribute, yAttribute, "WindSpeed", "Visibility", {
-                handleOnClick: cellData => console.log('Clicked:', cellData),
-                handleOnMouseEnter: cellData => setHoveredData(cellData),
+            const handleOnBrush = (selectedData) => {
+                dispatch(updateBrushedData(selectedData));
+            };
+            scatterplotD3.renderScatterplot(data, xAxis, yAxis, "WindSpeed", "Visibility", {
+                handleOnClick: (cellData) => console.log('Clicked:', cellData),
+                handleOnMouseEnter: (cellData) => setHoveredData(cellData),
                 handleOnMouseLeave: () => setHoveredData(null),
-                handleOnBrush
+                handleOnBrush,
             });
         }
-    }, [data, xAttribute, yAttribute, dispatch, setHoveredData]);
+    }, [data, xAxis, yAxis, dispatch, setHoveredData]);
 
-    return <div ref={divContainerRef} className="scatterplotDivContainer" style={{ width: '100%', height: '100%' }}></div>;
+    return <div ref={divContainerRef} className="scatterplotDivContainer"></div>;
 }
 
 export default ScatterplotContainer;

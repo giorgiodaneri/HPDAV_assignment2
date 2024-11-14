@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { updateAxes } from "../../redux/ConfigSlice";
-import { getSeoulBikeData, generateFromConfig, setData } from "../../redux/DataSetSlice";
+import { updateAxes, generateFromConfig } from "../../redux/ConfigSlice";
+import { getSeoulBikeData, setData } from "../../redux/DataSetSlice";
 
 function ControlBar() {
     const dispatch = useDispatch();
@@ -44,22 +44,18 @@ function ControlBar() {
     }
 
     const handleOnSubmit = (event) => {
-        // Prevent the browser from reloading the page
         event.preventDefault();
     
-        // Get the form data and transform it in JSON format
         const form = event.target;
         const formData = new FormData(form);
         const formJSON = Object.fromEntries(formData.entries());
-
-        // get first data from the form and store it in x and y
-        const x = formJSON[Object.keys(formJSON)[0]];
-        const y = formJSON[Object.keys(formJSON)[1]];
-
-        console.log("Form JSON:", formJSON);
-        dispatch(generateFromConfig({ xAxis: x, yAxis: y }));
-        // dispatch(getSeoulBikeData());
-    }
+    
+        // Update both x and y axis in the Redux store
+        dispatch(generateFromConfig({
+            xAxis: formJSON.xAxis,
+            yAxis: formJSON.yAxis
+        }));
+    };
 
     return (
         <>
