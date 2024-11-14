@@ -1,9 +1,10 @@
 import * as d3 from 'd3';
 
 class ParallelCoordinates {
-    constructor(container, data) {
+    constructor(container, data, brushedData) {
         this.container = container;
         this.data = data;
+        this.brushedData = brushedData || []; // Initialize to an empty array if undefined
         this.margin = { top: 30, right: 40, bottom: 25, left: 40 };
 
         // Get the width and height from the container's bounding box
@@ -84,8 +85,38 @@ class ParallelCoordinates {
             .attr("d", d => lineGenerator(attributes.map(attr => d[attr])))
             .style("fill", "none")
             .style("stroke", d => colorScale(d.Humidity))
-            .style("opacity", 0.02);
+            .style("opacity", d => {
+                // If the data point is in the brushedData, set opacity to 0.4, else 0.02
+                return this.isBrushed(d) ? 0.4 : 0.02;
+            });
+    }
+
+    // Generate a unique identifier for each data point
+    getUniqueId(d) {
+        return `${d.date}-${d.Temperature}-${d.Humidity}`;  // Use key attributes to create a unique ID
+    }
+
+    // Check if a data point is inside the brushed data by iterating over brushedData explicitly
+    isBrushed(d) {
+        // Ensure brushedData is defined and contains elements before checking
+        if (!this.brushedData || this.brushedData.length === 0) {
+            console.log("No brushed data!!!");
+            return false; // No brushed data, all points will be shown with default opacity
+        }
+
+        const uniqueId = this.getUniqueId(d);  // Get unique identifier for the current data point
+
+        // Iterate over the brushedData and compare the uniqueIds
+        for (let i = 0; i < this.brushedData.length; i++) {
+            const brushed = this.brushedData[i];
+            if (this.getUniqueId(brushed) === uniqueId) {
+                return true; // If a match is found, return true
+            }
+        }
+
+        return false; // If no match is found, return false
     }
 }
 
 export default ParallelCoordinates;
+

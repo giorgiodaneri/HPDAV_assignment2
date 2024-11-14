@@ -60,8 +60,8 @@ class ScatterplotD3 {
             .text(yAttribute)
             .style("font-size", "14px");
 
-        // Scatterplot circles
-        svg.selectAll(".dot")
+        // Scatterplot circles with default opacity of 0.3
+        const circles = svg.selectAll(".dot")
             .data(data)
             .enter().append("circle")
             .attr("class", "dot")
@@ -69,13 +69,13 @@ class ScatterplotD3 {
             .attr("cx", d => x(d[xAttribute]))
             .attr("cy", d => y(d[yAttribute]))
             .attr("fill", d => colorScale(d[colorAttribute]))
-            .attr("opacity", 0.6)
+            .attr("opacity", 0.3)  // Set initial opacity to 0.3
             .on("mouseover", function(event, d) {
-                d3.select(this).attr("fill", "red").attr("opacity", 1.0);
+                d3.select(this).attr("fill", "red").attr("opacity", 0.8);
                 controllerMethods.handleOnMouseEnter(d);
             })
             .on("mouseout", function(event, d) {
-                d3.select(this).attr("fill", colorScale(d[colorAttribute])).attr("opacity", 0.6);
+                d3.select(this).attr("fill", colorScale(d[colorAttribute])).attr("opacity", 0.3);
                 controllerMethods.handleOnMouseLeave();
             })
             .on("click", function(event, d) {
@@ -85,19 +85,38 @@ class ScatterplotD3 {
         // Brushing functionality
         const brush = d3.brush()
             .extent([[0, 0], [width, height]])
-            .on("start brush end", event => {
+            .on("start brush end", (event) => {
                 const selection = event.selection;
-                if (!selection) return;
 
-                const [[x0, y0], [x1, y1]] = selection;
-                const selectedData = data.filter(d => {
-                    const cx = x(d[xAttribute]);
-                    const cy = y(d[yAttribute]);
-                    return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;
-                });
-                controllerMethods.handleOnBrush(selectedData);
+                if (selection) {
+                    const [[x0, y0], [x1, y1]] = selection;
+
+                    // Adjust opacity based on whether points fall within the brushed area
+                    circles.attr("opacity", d => {
+                        const cx = x(d[xAttribute]);
+                        const cy = y(d[yAttribute]);
+                        const isSelected = x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;
+                        return isSelected ? 0.8 : 0.3;  // 0.6 for selected points, 0.3 for others
+                    });
+
+                    // Filter data to only include points within the brushed area
+                    const selectedData = data.filter(d => {
+                        const cx = x(d[xAttribute]);
+                        const cy = y(d[yAttribute]);
+                        return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;
+                    });
+
+                    if (event.type === "end") {
+                        // Trigger callback with the selected data only at the end of the brush
+                        controllerMethods.handleOnBrush(selectedData);
+                    }
+                } else {
+                    // Reset opacity when brush is cleared
+                    circles.attr("opacity", 0.3);  // Set all points back to 0.3
+                }
             });
 
+        // Append brush to the SVG
         svg.append("g").attr("class", "brush").call(brush);
     }
 
