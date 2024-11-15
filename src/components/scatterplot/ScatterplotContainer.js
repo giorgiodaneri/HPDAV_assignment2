@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import ScatterplotD3 from './Scatterplot-d3';
 import { useSelector, useDispatch } from 'react-redux';
-import { setBrushedData } from '../../redux/DataSetSlice';
+import { setBrushedData } from '../../redux/BrushedDataSlice';
 
 function ScatterplotContainer({ setHoveredData }) {
     const data = useSelector((state) => state.dataSet);

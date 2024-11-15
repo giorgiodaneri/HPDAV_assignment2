@@ -7,10 +7,6 @@ export const configSlice = createSlice({
     yAxis : "RentedBikeCount",
   },
   reducers: {
-    updateAxes: (state, action) => {
-      console.log("updateAxes:", action.payload);
-      return {...state, xAxis:action.payload.xAxis, yAxis:action.payload.yAxis};
-    },
     generateFromConfig: (state, action) => {
       // Update both xAxis and yAxis with the selected values
       state.xAxis = action.payload.xAxis;
@@ -20,6 +16,6 @@ export const configSlice = createSlice({
 })
 
 // Action creators are generated for each case reducer function
-export const { updateAxes, generateFromConfig } = configSlice.actions
+export const { generateFromConfig } = configSlice.actions
 
 export default configSlice.reducer

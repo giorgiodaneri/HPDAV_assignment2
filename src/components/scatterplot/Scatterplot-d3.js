@@ -92,6 +92,7 @@ class ScatterplotD3 {
                     const [[x0, y0], [x1, y1]] = selection;
 
                     // Adjust opacity based on whether points fall within the brushed area
+                    // So that they are easily distinguishable from the user perspective
                     circles.attr("opacity", d => {
                         const cx = x(d[xAttribute]);
                         const cy = y(d[yAttribute]);

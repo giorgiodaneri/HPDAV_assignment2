@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 
 function ParallelCoordinatesContainer() {
     const data = useSelector(state => state.dataSet);
-    const brushedData = useSelector(state => state.dataSet.brushedData); 
+    const brushedData = useSelector(state => state.brushedData); 
     const parallelContainerRef = useRef(null);
 
     useEffect(() => {
