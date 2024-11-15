@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { generateFromConfig } from "../../redux/ConfigSlice";
-import { getSeoulBikeData } from "../../redux/DataSetSlice";
 
 function ControlBar() {
     const dispatch = useDispatch();
@@ -16,11 +15,6 @@ function ControlBar() {
     // Local state for x and y axis selection
     const [selectedXAxis, setSelectedXAxis] = useState(genConfig.xAxis || '');
     const [selectedYAxis, setSelectedYAxis] = useState(genConfig.yAxis || '');
-
-    // Fetch data on component mount
-    useEffect(() => {
-        dispatch(getSeoulBikeData());
-    }, [dispatch]);
 
     // Extract column names when data is loaded
     useEffect(() => {

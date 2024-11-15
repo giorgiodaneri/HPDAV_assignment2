@@ -16,11 +16,6 @@ export const getSeoulBikeData = createAsyncThunk('seoulBikeData/fetchData', asyn
   return filteredData;
 })
 
-function generateUpdatedPlot(dataset, xAxis, yAxis)
- {
-  console.log("generateUpdatedPlot with x:", xAxis, "y:", yAxis);
-  return {xAxis : xAxis, yAxis : yAxis};
- }
 export const dataSetSlice = createSlice({
   // name of the slice
   name: 'dataSet',

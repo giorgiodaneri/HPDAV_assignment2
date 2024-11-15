@@ -13,7 +13,7 @@ class ScatterplotD3 {
     }
 
     renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, controllerMethods) {
-        const margin = { top: 40, right: 40, bottom: 40, left: 85 };
+        const margin = { top: 40, right: 40, bottom: 50, left: 85 };
         const width = this.size.width - margin.left - margin.right;
         const height = this.size.height - margin.top - margin.bottom;
 
@@ -44,7 +44,7 @@ class ScatterplotD3 {
             .append("text")
             .attr("fill", "black")
             .attr("x", width)
-            .attr("y", 25)
+            .attr("y", 30)
             .attr("text-anchor", "end")
             .text(xAttribute)
             .style("font-size", "14px");
@@ -54,7 +54,7 @@ class ScatterplotD3 {
             .append("text")
             .attr("fill", "black")
             .attr("transform", "rotate(-90)")
-            .attr("y", -50)
+            .attr("y", -55)
             .attr("dy", "1em")
             .attr("text-anchor", "end")
             .text(yAttribute)
@@ -81,7 +81,7 @@ class ScatterplotD3 {
             .on("click", function(event, d) {
                 controllerMethods.handleOnClick(d);
             });
-
+            
         // Brushing functionality
         const brush = d3.brush()
             .extent([[0, 0], [width, height]])

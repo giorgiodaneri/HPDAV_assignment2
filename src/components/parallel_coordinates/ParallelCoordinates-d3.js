@@ -5,7 +5,7 @@ class ParallelCoordinates {
         this.container = container;
         this.data = data;
         this.brushedData = brushedData || []; // Initialize to an empty array if undefined
-        this.margin = { top: 30, right: 40, bottom: 25, left: 40 };
+        this.margin = { top: 30, right: 10, bottom: 25, left: 10 };
 
         // Get the width and height from the container's bounding box
         const containerRect = container.getBoundingClientRect();

@@ -7,7 +7,7 @@ export const brushedDataSlice = createSlice({
 },
   reducers: {
     setBrushedData: (state, action) => {
-        state.brushedData.push(...action.payload); // Append new data to the existing array
+        state.brushedData = action.payload; // Append new data to the existing array
     },
   }
 })

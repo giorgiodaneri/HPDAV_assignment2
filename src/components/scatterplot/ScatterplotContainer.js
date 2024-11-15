@@ -1,6 +1,5 @@
 import './Scatterplot.css';
 import { useEffect, useRef } from 'react';
-import * as d3 from 'd3';
 import ScatterplotD3 from './Scatterplot-d3';
 import { useSelector, useDispatch } from 'react-redux';
 import { setBrushedData } from '../../redux/BrushedDataSlice';
@@ -44,7 +43,7 @@ function ScatterplotContainer({ setHoveredData }) {
         }
     }, [data, xAxis, yAxis, dispatch, setHoveredData]);
 
-    return <div ref={divContainerRef} className="scatterplotDivContainer"></div>;
+    return <div ref={divContainerRef} className="scatterplotDivContainer" style={{ width: '100%', height: '100%' }}></div>;
 }
 
 export default ScatterplotContainer;
