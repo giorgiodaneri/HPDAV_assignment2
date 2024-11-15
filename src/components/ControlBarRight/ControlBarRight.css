@@ -1,0 +1,21 @@
+/*Align all the three text boxes on the same row */
+.control-bar-right-form {
+    display: flex;
+    align-items: center; /* Vertically align items */
+    gap: 10px; /* Space between elements */
+}
+
+.form-label {
+    display: flex;
+    flex-direction: column;
+    font-size: 14px;
+    margin-right: 10px;
+}
+
+.generate-button {
+    padding: 5px 10px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+
