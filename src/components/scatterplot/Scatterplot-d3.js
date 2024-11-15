@@ -1,90 +1,138 @@
 import * as d3 from 'd3';
 
 class ScatterplotD3 {
-    constructor(container) {
-        this.container = container;
-        this.svg = d3.select(container).append("svg");
-    }
+  margin = { top: 40, right: 40, bottom: 50, left: 85 };
+  size;
+  width;
+  height;
+  svg;
+  x;
+  y;
+  colorScale;
+  sizeScale;
+  defaultOpacity = 0.3;
+  transitionDuration = 500;
+  circleRadius = 3;
 
-    // Dynamically set the SVG dimensions to fit the container size
-    create({ size }) {
-        this.size = size;
-        this.svg.attr("width", size.width).attr("height", size.height);
-    }
+  constructor(container) {
+    this.container = container;
+    this.svg = d3.select(container).append("svg");
+  }
 
-    renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, controllerMethods) {
-        const margin = { top: 40, right: 40, bottom: 50, left: 85 };
-        const width = this.size.width - margin.left - margin.right;
-        const height = this.size.height - margin.top - margin.bottom;
+  create({ size }) {
+    this.size = size;
+    this.width = this.size.width - this.margin.left - this.margin.right;
+    this.height = this.size.height - this.margin.top - this.margin.bottom;
 
-        // Clear previous content
-        this.svg.selectAll("*").remove();
+    this.svg
+      .attr("width", this.size.width)
+      .attr("height", this.size.height);
 
-        const x = d3.scaleLinear().range([0, width]);
-        const y = d3.scaleLinear().range([height, 0]);
+    this.x = d3.scaleLinear().range([0, this.width]);
+    this.y = d3.scaleLinear().range([this.height, 0]);
 
-        // Define color and size scales based on data attributes
-        const colorScale = d3.scaleSequential(d3.interpolateTurbo)
-            .domain(d3.extent(data, d => d[colorAttribute]));
-        const sizeScale = d3.scaleLinear()
-            .domain(d3.extent(data, d => d[sizeAttribute]))
-            .range([2, 6]);
+    this.svg.append("g")
+      .attr("transform", `translate(${this.margin.left},${this.margin.top})`);
 
-        const svg = this.svg.append("g")
-            .attr("transform", `translate(${margin.left},${margin.top})`);
+    this.svg.select("g")
+      .append("g")
+      .attr("class", "xAxisG")
+      .attr("transform", `translate(0,${this.height})`);
 
-        // Set domains for axes
-        x.domain(d3.extent(data, d => d[xAttribute])).nice();
-        y.domain(d3.extent(data, d => d[yAttribute])).nice();
+    this.svg.select("g")
+      .append("g")
+      .attr("class", "yAxisG");
+  }
 
-        // X and Y axes with labels
-        svg.append("g")
-            .attr("transform", `translate(0,${height})`)
-            .call(d3.axisBottom(x))
-            .append("text")
-            .attr("fill", "black")
-            .attr("x", width)
-            .attr("y", 30)
-            .attr("text-anchor", "end")
-            .text(xAttribute)
-            .style("font-size", "14px");
+  changeBorderAndOpacity(selection) {
+    selection.style("opacity", (item) => item.selected ? 1 : this.defaultOpacity)
+      .select(".dotCircle")
+      .attr("stroke-width", (item) => item.selected ? 2 : 0);
+  }
 
-        svg.append("g")
-            .call(d3.axisLeft(y))
-            .append("text")
-            .attr("fill", "black")
-            .attr("transform", "rotate(-90)")
-            .attr("y", -55)
-            .attr("dy", "1em")
-            .attr("text-anchor", "end")
-            .text(yAttribute)
-            .style("font-size", "14px");
+  updateDots(selection, xAttribute, yAttribute) {
+    selection
+      .transition().duration(this.transitionDuration)
+      .attr("transform", (item) => `translate(${this.x(item[xAttribute])},${this.y(item[yAttribute])})`);
+    this.changeBorderAndOpacity(selection);
+  }
 
-        // Scatterplot circles with default opacity of 0.3
-        const circles = svg.selectAll(".dot")
-            .data(data)
-            .enter().append("circle")
-            .attr("class", "dot")
-            .attr("r", d => sizeScale(d[sizeAttribute]))
-            .attr("cx", d => x(d[xAttribute]))
-            .attr("cy", d => y(d[yAttribute]))
-            .attr("fill", d => colorScale(d[colorAttribute]))
-            .attr("opacity", 0.3)  // Set initial opacity to 0.3
-            .on("mouseover", function(event, d) {
-                d3.select(this).attr("fill", "red").attr("opacity", 0.8);
-                controllerMethods.handleOnMouseEnter(d);
-            })
-            .on("mouseout", function(event, d) {
-                d3.select(this).attr("fill", colorScale(d[colorAttribute])).attr("opacity", 0.3);
-                controllerMethods.handleOnMouseLeave();
-            })
-            .on("click", function(event, d) {
-                controllerMethods.handleOnClick(d);
+  highlightSelectedItems(selectedItems) {
+    this.svg.select("g").selectAll(".dotG")
+      .data(selectedItems, (itemData) => itemData.index)
+      .join(
+        (enter) => enter,
+        (update) => this.changeBorderAndOpacity(update),
+        (exit) => exit.remove()
+      );
+  }
+
+  updateAxis(visData, xAttribute, yAttribute) {
+    this.x.domain([d3.min(visData, (item) => item[xAttribute]), d3.max(visData, (item) => item[xAttribute])]);
+    this.y.domain([d3.min(visData, (item) => item[yAttribute]), d3.max(visData, (item) => item[yAttribute])]);
+
+    this.svg.select(".xAxisG")
+      .transition().duration(1000)
+      .call(d3.axisBottom(this.x));
+
+    // add text to the x-axis
+    this.svg.select(".xAxisG")
+      .append("text")
+      .attr("fill", "black")
+      .attr("x", this.width)
+      .attr("y", 30)
+      .attr("text-anchor", "end")
+      .text(xAttribute)
+      .style("font-size", "14px");;
+
+
+    this.svg.select(".yAxisG")
+      .transition().duration(1000)
+      .call(d3.axisLeft(this.y));
+
+    // add text to the y-axis
+    this.svg.select(".yAxisG")
+      .append("text")
+      .attr("fill", "black")
+      .attr("transform", "rotate(-90)")
+      .attr("y", -55)
+      .attr("dy", "0.71em")
+      .attr("text-anchor", "end")
+      .text(yAttribute)
+      .style("font-size", "14px");
+  }
+
+  renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, controllerMethods) {
+    this.updateAxis(data, xAttribute, yAttribute);
+
+    this.colorScale = d3.scaleSequential(d3.interpolateTurbo)
+      .domain(d3.extent(data, (d) => d[colorAttribute]));
+
+    this.sizeScale = d3.scaleLinear()
+      .domain(d3.extent(data, (d) => d[sizeAttribute]))
+      .range([1, 6]);
+
+    this.svg.select("g").selectAll(".dotG")
+      .data(data, (itemData) => itemData.index)
+      .join(
+        (enter) => {
+          const itemG = enter.append("g")
+            .attr("class", "dotG")
+            .style("opacity", this.defaultOpacity)
+            .on("click", (event, itemData) => {
+              controllerMethods.handleOnClick(itemData);
             });
-            
-        // Brushing functionality
-        const brush = d3.brush()
-            .extent([[0, 0], [width, height]])
+
+          itemG.append("circle")
+            .attr("class", "dotCircle")
+            .attr("r", this.circleRadius)
+            .attr("stroke", "red")
+            .attr("r", d => this.sizeScale(d[sizeAttribute]))
+            .attr("fill", d => this.colorScale(d[colorAttribute]))
+
+            // Brushing functionality
+            const brush = d3.brush()
+            .extent([[0, 0], [this.size.width, this.size.height]])
             .on("start brush end", (event) => {
                 const selection = event.selection;
 
@@ -93,17 +141,17 @@ class ScatterplotD3 {
 
                     // Adjust opacity based on whether points fall within the brushed area
                     // So that they are easily distinguishable from the user perspective
-                    circles.attr("opacity", d => {
-                        const cx = x(d[xAttribute]);
-                        const cy = y(d[yAttribute]);
+                    itemG.attr("opacity", d => {
+                        const cx = this.x(d[xAttribute]);
+                        const cy = this.y(d[yAttribute]);
                         const isSelected = x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;
                         return isSelected ? 0.8 : 0.3;  // 0.6 for selected points, 0.3 for others
                     });
 
                     // Filter data to only include points within the brushed area
                     const selectedData = data.filter(d => {
-                        const cx = x(d[xAttribute]);
-                        const cy = y(d[yAttribute]);
+                        const cx = this.x(d[xAttribute]);
+                        const cy = this.y(d[yAttribute]);
                         return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;
                     });
 
@@ -113,17 +161,28 @@ class ScatterplotD3 {
                     }
                 } else {
                     // Reset opacity when brush is cleared
-                    circles.attr("opacity", 0.3);  // Set all points back to 0.3
+                    itemG.attr("opacity", 0.3);  // Set all points back to 0.3
                 }
             });
-
         // Append brush to the SVG
-        svg.append("g").attr("class", "brush").call(brush);
-    }
+        this.svg.append("g").attr("class", "brush").call(brush);
 
-    clear() {
-        this.svg.selectAll("*").remove();
-    }
+          this.updateDots(itemG, xAttribute, yAttribute);
+        },
+        (update) => {
+          this.updateDots(update, xAttribute, yAttribute);
+        },
+        (exit) => {
+          exit.remove();
+        }
+      );
+
+
+  }
+
+  clear() {
+    this.svg.selectAll("*").remove();
+  }
 }
 
 export default ScatterplotD3;
