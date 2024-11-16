@@ -1,7 +1,6 @@
 import ParallelCoordinates from './ParallelCoordinates-d3';
 import { useSelector, useDispatch } from 'react-redux';
 import { useEffect, useRef } from 'react';
-import { setBrushedDataParallelCoords } from '../../redux/BrushedDataSliceSecond';
 
 function ParallelCoordinatesContainer() {
     const data = useSelector(state => state.dataSet);
@@ -17,7 +16,7 @@ function ParallelCoordinatesContainer() {
     useEffect(() => {
         if (data.length > 0) {
             // Clear any existing SVG elements in the container
-            parallelContainerRef.current.innerHTML = '';
+            // parallelContainerRef.current.innerHTML = '';
 
             // Create a new ParallelCoordinates instance, passing the dispatch function
             parallelCoordinatesRef.current = new ParallelCoordinates(

@@ -7,7 +7,7 @@ function ControlBarRight() {
     const dispatch = useDispatch();
 
     // Fetch the current configuration from the Redux store
-    const genConfig = useSelector((state) => state.config || { firstAxis: '', secondAxis: '', thirdAxis: '' });
+    const genConfig = useSelector((state) => state.configRight || { firstAxis: 'Temperature', secondAxis: 'RentedBikeCount', third: 'Rainfall' });
 
     // Fetch column names from the data slice
     const data = useSelector((state) => state.dataSet);
@@ -16,7 +16,7 @@ function ControlBarRight() {
     // Local state for x and y axis selection
     const [selectedFirstAxis, setSelectedFirstAxis] = useState(genConfig.firstAxis || '');
     const [selectedSecondAxis, setSelectedSecondAxis] = useState(genConfig.secondAxis || '');
-    const [selectedThirdAxis, setSelectedThirdAxis] = useState(genConfig.thirdAxis || '');
+    const [selectedThirdAxis, setSelectedThirdAxis] = useState(genConfig.third || '');
 
     // Extract column names when data is loaded
     useEffect(() => {

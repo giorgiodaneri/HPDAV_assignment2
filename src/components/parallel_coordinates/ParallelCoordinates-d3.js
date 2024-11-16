@@ -7,8 +7,8 @@ class ParallelCoordinates {
         this.container = container;
         this.data = data;
         this.brushedData = brushedData || []; // Initialize to an empty array if undefined
-        this.firstAxis = firstAxis || "RentedBikeCount"; // Initialize to "RentedBikeCount" if undefined
-        this.secondAxis = secondAxis || "Temperature"; // Initialize to "Temperature" if undefined
+        this.firstAxis = firstAxis || "Temperature"; // Initialize to "RentedBikeCount" if undefined
+        this.secondAxis = secondAxis || "RentedBikeCount"; // Initialize to "Temperature" if undefined
         this.thirdAxis = thirdAxis || "Rainfall"; // Initialize to "Rainfall" if undefined
         this.margin = { top: 30, right: 10, bottom: 25, left: 10 };
         this.dispatch = dispatch;
@@ -96,7 +96,7 @@ class ParallelCoordinates {
                 return this.isBrushed(d) ? 0.4 : 0.02;
             });
     
-        // Add a brush to the first axis
+        // Add a brush to the first axis on vertical orientation
         const brush = d3.brushY()
             .extent([[xScale(this.firstAxis) - 5, 0], [xScale(this.firstAxis) + 5, this.height]])
             .on("start brush end", (event) => {

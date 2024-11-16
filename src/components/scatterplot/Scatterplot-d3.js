@@ -177,26 +177,32 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
     
           if (selection) {
               const [[x0, y0], [x1, y1]] = selection;
+
+              // Adjust coordinates for the margin
+              const adjustedX0 = x0 - this.margin.left;
+              const adjustedX1 = x1 - this.margin.left;
+              const adjustedY0 = y0 - this.margin.top;
+              const adjustedY1 = y1 - this.margin.top;
     
               const selectedData = data.filter(d => {
                   const cx = this.x(d[xAttribute]);
                   const cy = this.y(d[yAttribute]);
-                  return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;
+                  return adjustedX0 <= cx && cx <= adjustedX1 && adjustedY0 <= cy && cy <= adjustedY1;
               });
     
               this.svg.selectAll(".dotG")
-                  .attr("opacity", d => {
+                  .style("opacity", d => {
                       const cx = this.x(d[xAttribute]);
                       const cy = this.y(d[yAttribute]);
-                      return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1 ? 0.8 : 0.3;
-                  });
+                      return adjustedX0 <= cx && cx <= adjustedX1 && adjustedY0 <= cy && cy <= adjustedY1 ? 0.8 : 0.3;
+                    });
     
               if (event.type === "end") {
                   controllerMethods.handleOnBrush(selectedData);
               }
           } else {
               this.svg.selectAll(".dotG")
-                  .attr("opacity", 0.3);
+                  .style("opacity", 0.3);
     
               if (event.type === "end") {
                   // Dispatch an empty array to clear the brushed data
