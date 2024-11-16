@@ -1,7 +1,9 @@
 import * as d3 from 'd3';
+import { setBrushedDataParallelCoords } from '../../redux/BrushedDataSliceSecond'; // Import the Redux action
+
 
 class ParallelCoordinates {
-    constructor(container, data, brushedData, firstAxis, secondAxis, thirdAxis) {
+    constructor(container, data, brushedData, firstAxis, secondAxis, thirdAxis, dispatch) {
         this.container = container;
         this.data = data;
         this.brushedData = brushedData || []; // Initialize to an empty array if undefined
@@ -9,6 +11,7 @@ class ParallelCoordinates {
         this.secondAxis = secondAxis || "Temperature"; // Initialize to "Temperature" if undefined
         this.thirdAxis = thirdAxis || "Rainfall"; // Initialize to "Rainfall" if undefined
         this.margin = { top: 30, right: 10, bottom: 25, left: 10 };
+        this.dispatch = dispatch;
 
         // Get the width and height from the container's bounding box
         const containerRect = container.getBoundingClientRect();
@@ -19,58 +22,49 @@ class ParallelCoordinates {
     }
 
     drawParallelCoordinates(firstAxis, secondAxis, thirdAxis) {
+        
         // Update the axes based on the selected attributes
-        if(firstAxis && secondAxis && thirdAxis) {
+        if (firstAxis && secondAxis && thirdAxis) {
             this.firstAxis = firstAxis;
             this.secondAxis = secondAxis;
             this.thirdAxis = thirdAxis;
         }
-        
-        // Define the attributes to be used in the parallel coordinates
-        // const attributes = ["RentedBikeCount", "Temperature", "Rainfall"];
+    
         const attributes = [this.firstAxis, this.secondAxis, this.thirdAxis];
-
-        // Define the color scale using the Turbo colormap
         const colorScale = d3.scaleSequential(d3.interpolatePlasma)
             .domain(d3.extent(this.data, d => d.Humidity));
-
-        // Remove any existing SVG before appending a new one
+    
         d3.select(this.container).selectAll("svg").remove();
-
-        // Append the SVG for the parallel coordinates
+    
         const svg = d3.select(this.container)
             .append("svg")
             .attr("width", this.width + this.margin.left + this.margin.right)
             .attr("height", this.height + this.margin.top + this.margin.bottom)
             .append("g")
             .attr("transform", `translate(${this.margin.left},${this.margin.top})`);
-
-        // Set up scales for each attribute
+    
         const yScales = {};
         attributes.forEach(attr => {
             yScales[attr] = d3.scaleLinear()
                 .domain(d3.extent(this.data, d => d[attr]))
-                .range(attr === "None" ? [0, this.height] : [this.height, 0]);
+                .range([this.height, 0]);
         });
-
-        // X scale for attribute positions
+    
         const xScale = d3.scalePoint()
             .range([0, this.width])
             .padding(0.5)
             .domain(attributes);
-
-        // Draw the axes for each attribute
+    
         svg.selectAll(".axis")
             .data(attributes)
             .enter()
             .append("g")
             .attr("class", "axis")
             .attr("transform", d => `translate(${xScale(d)},0)`)
-            .each(function(d) {
+            .each(function (d) {
                 d3.select(this).call(d3.axisLeft(yScales[d]));
             });
-
-        // Draw the axis labels below each axis
+    
         svg.selectAll(".axis-label")
             .data(attributes)
             .enter()
@@ -79,16 +73,17 @@ class ParallelCoordinates {
             .attr("x", d => xScale(d))
             .attr("y", this.height + 20)
             .attr("text-anchor", "middle")
-            .style("font-size", "14px")
+            .style("font-size", "16px")
             .text(d => d);
-
-        // Line generator for each data point
+    
+        // make the axes ticks bigger
+        svg.selectAll(".axis").selectAll("text").style("font-size", "14px");
+    
         const lineGenerator = d3.line()
             .curve(d3.curveBasis)
             .x((d, i) => xScale(attributes[i]))
             .y((d, i) => yScales[attributes[i]](d));
-
-        // Draw the lines for each data point
+    
         svg.selectAll(".line")
             .data(this.data)
             .enter()
@@ -98,10 +93,42 @@ class ParallelCoordinates {
             .style("fill", "none")
             .style("stroke", d => colorScale(d.Humidity))
             .style("opacity", d => {
-                // If the data point is in the brushedData, set opacity to 0.4, else 0.02
                 return this.isBrushed(d) ? 0.4 : 0.02;
             });
+    
+        // Add a brush to the first axis
+        const brush = d3.brushY()
+            .extent([[xScale(this.firstAxis) - 5, 0], [xScale(this.firstAxis) + 5, this.height]])
+            .on("start brush end", (event) => {
+                if (event.selection) {
+                    const [y0, y1] = event.selection;
+                    const brushedData = this.data.filter(d => {
+                        const value = yScales[this.firstAxis](d[this.firstAxis]);
+                        return y0 <= value && value <= y1;
+                    });
+    
+                    svg.selectAll(".line")
+                        .style("opacity", d => {
+                            return brushedData.includes(d) ? 0.4 : 0.02;
+                        });
+    
+                    // call reducer to store brushed data
+                    // Dispatch the brushed data to the Redux store
+                    this.dispatch(setBrushedDataParallelCoords(brushedData));
+                } else {
+                    // Reset if brush is cleared
+                    svg.selectAll(".line").style("opacity", 0.02);
+                    // call reducer to store empty brushed data
+                    this.dispatch(setBrushedDataParallelCoords([]));
+                }
+            });
+    
+        // Append brush with custom styles
+        svg.append("g")
+            .attr("class", "brush")
+            .call(brush)
     }
+      
 
     // Generate a unique identifier for each data point
     getUniqueId(d) {
@@ -119,7 +146,7 @@ class ParallelCoordinates {
         // if brushData is not empty, print it
         if(this.brushedData.brushedData.length > 0)
         {
-            console.log("Brushed data:", this.brushedData);
+            // console.log("Brushed data:", this.brushedData);
         }
         const uniqueId = this.getUniqueId(d);  // Get unique identifier for the current data point
 
@@ -127,7 +154,6 @@ class ParallelCoordinates {
         for (let i = 0; i < this.brushedData.brushedData.length; i++) {
             const brushed = this.brushedData.brushedData[i];
             if (this.getUniqueId(brushed) === uniqueId) {
-                console.log("Match found for:", uniqueId);
                 return true; // If a match is found, return true
             }
         }

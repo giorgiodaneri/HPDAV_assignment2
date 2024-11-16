@@ -10,6 +10,7 @@ class ScatterplotD3 {
   y;
   colorScale;
   sizeScale;
+  brushedDataParallelCoords;
   defaultOpacity = 0.3;
   transitionDuration = 1000;
   circleRadius = 3;
@@ -17,6 +18,7 @@ class ScatterplotD3 {
   constructor(container) {
     this.container = container;
     this.svg = d3.select(container).append("svg");
+    this.brushedDataParallelCoords = [];
   }
 
   create({ size }) {
@@ -53,7 +55,11 @@ class ScatterplotD3 {
   updateDots(selection, xAttribute, yAttribute) {
     selection
       .transition().duration(this.transitionDuration)
-      .attr("transform", (item) => `translate(${this.x(item[xAttribute])},${this.y(item[yAttribute])})`);
+      .attr("transform", (item) => `translate(${this.x(item[xAttribute])},${this.y(item[yAttribute])})`)
+      .style("opacity", d => {
+        // If the data point is in the brushedData, set opacity to 0.4, else 0.02
+        return this.isBrushed(d) ? 0.8 : 0.3;
+    });
     // this.changeBorderAndOpacity(selection);
   }
 
@@ -88,7 +94,7 @@ class ScatterplotD3 {
         .attr("y", 30)
         .attr("text-anchor", "end")
         .text(xAttribute)
-        .style("font-size", "14px");
+        .style("font-size", "16px");
 
     // Update the y-axis
     this.svg.select(".yAxisG")
@@ -104,88 +110,135 @@ class ScatterplotD3 {
         .attr("class", "axis-label") // Add a class for easy selection
         .attr("fill", "black")
         .attr("transform", "rotate(-90)")
-        .attr("y", -55)
+        .attr("y", -65)
         .attr("dy", "0.71em")
         .attr("text-anchor", "end")
         .text(yAttribute)
-        .style("font-size", "14px");
+        .style("font-size", "16px");
+
+    // make the axes ticks bigger
+    this.svg.selectAll(".xAxisG").selectAll("text").style("font-size", "14px");
+    this.svg.selectAll(".yAxisG").selectAll("text").style("font-size", "14px");
+}
+
+// Generate a unique identifier for each data point
+getUniqueId(d) {
+  // print current date and hour
+  return `${d.Date}-${d.Hour}`;  // Use key attributes to create a unique ID
+}
+
+// Check if a data point is inside the brushed data by iterating over brushedData explicitly
+isBrushed(d) {
+  // Ensure brushedData is defined and contains elements before checking
+  if (!this.brushedDataParallelCoords || this.brushedDataParallelCoords.length === 0) {
+      return false; // No brushed data, all points will be shown with default opacity
+  }
+
+  console.log("Brushed data from Parallel Coords:", this.brushedDataParallelCoords);
+  // if brushData is not empty, print it
+  if(this.brushedDataParallelCoords.brushedDataParallelCoords.length > 0)
+  {
+    console.log("Brushed data:", this.brushedDataParallelCoords);
+  }
+  const uniqueId = this.getUniqueId(d);  // Get unique identifier for the current data point
+
+  // Iterate over the brushedData and compare the uniqueIds
+  for (let i = 0; i < this.brushedDataParallelCoords.brushedDataParallelCoords.length; i++) {
+      const brushed = this.brushedDataParallelCoords.brushedDataParallelCoords[i];
+      if (this.getUniqueId(brushed) === uniqueId) {
+          console.log("Match found for:", uniqueId);
+          return true; // If a match is found, return true
+      }
+  }
+
+  return false; // If no match is found, return false
 }
 
 
-  renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, controllerMethods) {
-    this.updateAxis(data, xAttribute, yAttribute);
+renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, brushedDataParallelCoords, controllerMethods) {
+  // if brushedDataParallelCoords is not empty, then update the opacity of the dots
+  if (brushedDataParallelCoords) {
+      this.brushedDataParallelCoords = brushedDataParallelCoords;
+  }
 
-    this.colorScale = d3.scaleSequential(d3.interpolateTurbo)
+  this.updateAxis(data, xAttribute, yAttribute);
+
+  this.colorScale = d3.scaleSequential(d3.interpolateTurbo)
       .domain(d3.extent(data, (d) => d[colorAttribute]));
 
-    this.sizeScale = d3.scaleLinear()
+  this.sizeScale = d3.scaleLinear()
       .domain(d3.extent(data, (d) => d[sizeAttribute]))
       .range([1, 6]);
 
-    this.svg.select("g").selectAll(".dotG")
+      const brush = d3.brush()
+      .extent([[0, 0], [this.size.width, this.size.height]]) // Define the extent of the brush
+      .on("start brush end", (event) => {
+          const selection = event.selection;
+    
+          if (selection) {
+              const [[x0, y0], [x1, y1]] = selection;
+    
+              const selectedData = data.filter(d => {
+                  const cx = this.x(d[xAttribute]);
+                  const cy = this.y(d[yAttribute]);
+                  return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;
+              });
+    
+              this.svg.selectAll(".dotG")
+                  .attr("opacity", d => {
+                      const cx = this.x(d[xAttribute]);
+                      const cy = this.y(d[yAttribute]);
+                      return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1 ? 0.8 : 0.3;
+                  });
+    
+              if (event.type === "end") {
+                  controllerMethods.handleOnBrush(selectedData);
+              }
+          } else {
+              this.svg.selectAll(".dotG")
+                  .attr("opacity", 0.3);
+    
+              if (event.type === "end") {
+                  // Dispatch an empty array to clear the brushed data
+                  controllerMethods.handleOnBrush([]);
+              }
+          }
+      });
+    
+    // Customize the brush appearance
+    this.svg.select("g").selectAll(".brush")
+    .call(brush);
+
+  this.svg.select("g").selectAll(".dotG")
       .data(data, (itemData) => itemData.index)
       .join(
-        (enter) => {
-          const itemG = enter.append("g")
-            .attr("class", "dotG")
-            .style("opacity", this.defaultOpacity)
-            .on("click", (event, itemData) => {
-              controllerMethods.handleOnClick(itemData);
-            });
+          (enter) => {
+              const itemG = enter.append("g")
+                  .attr("class", "dotG")
+                  .style("opacity", this.defaultOpacity)
+                  .on("click", (event, itemData) => {
+                      controllerMethods.handleOnClick(itemData);
+                  });
 
-          itemG.append("circle")
-            .attr("class", "dotCircle")
-            .attr("r", this.circleRadius)
-            .attr("r", d => this.sizeScale(d[sizeAttribute]))
-            .attr("fill", d => this.colorScale(d[colorAttribute]))
+              itemG.append("circle")
+                  .attr("class", "dotCircle")
+                  .attr("r", this.circleRadius)
+                  .attr("r", d => this.sizeScale(d[sizeAttribute]))
+                  .attr("fill", d => this.colorScale(d[colorAttribute]));
 
-            // Brushing functionality
-            const brush = d3.brush()
-            .extent([[0, 0], [this.size.width, this.size.height]])
-            .on("start brush end", (event) => {
-                const selection = event.selection;
-
-                if (selection) {
-                    const [[x0, y0], [x1, y1]] = selection;
-
-                    // Adjust opacity based on whether points fall within the brushed area
-                    // So that they are easily distinguishable from the user perspective
-                    itemG.attr("opacity", d => {
-                        const cx = this.x(d[xAttribute]);
-                        const cy = this.y(d[yAttribute]);
-                        const isSelected = x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;
-                        return isSelected ? 0.8 : 0.3;  // 0.6 for selected points, 0.3 for others
-                    });
-
-                    // Filter data to only include points within the brushed area
-                    const selectedData = data.filter(d => {
-                        const cx = this.x(d[xAttribute]);
-                        const cy = this.y(d[yAttribute]);
-                        return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;
-                    });
-
-                    if (event.type === "end") {
-                        // Trigger callback with the selected data only at the end of the brush
-                        controllerMethods.handleOnBrush(selectedData);
-                    }
-                } else {
-                    // Reset opacity when brush is cleared
-                    itemG.attr("opacity", 0.3);  // Set all points back to 0.3
-                }
-            });
-          // Append brush to the SVG
-          this.svg.append("g").attr("class", "brush").call(brush);
-
-          this.updateDots(itemG, xAttribute, yAttribute);
-        },
-        (update) => {
-          this.updateDots(update, xAttribute, yAttribute);
-        },
-        (exit) => {
-          exit.remove();
-        }
+              this.updateDots(itemG, xAttribute, yAttribute);
+          },
+          (update) => {
+              this.updateDots(update, xAttribute, yAttribute);
+          },
+          (exit) => {
+              exit.remove();
+          }
       );
-  }
+
+  this.svg.append("g").attr("class", "brush").call(brush);
+}
+
 
   clear() {
     this.svg.selectAll("*").remove();

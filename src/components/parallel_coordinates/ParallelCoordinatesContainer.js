@@ -1,6 +1,7 @@
 import ParallelCoordinates from './ParallelCoordinates-d3';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { useEffect, useRef } from 'react';
+import { setBrushedDataParallelCoords } from '../../redux/BrushedDataSliceSecond';
 
 function ParallelCoordinatesContainer() {
     const data = useSelector(state => state.dataSet);
@@ -8,6 +9,7 @@ function ParallelCoordinatesContainer() {
     const secondAxis = useSelector(state => state.configRight.secondAxis);
     const thirdAxis = useSelector(state => state.configRight.thirdAxis);
     const brushedData = useSelector(state => state.brushedData); 
+    const dispatch = useDispatch();
 
     const parallelContainerRef = useRef(null); // Ref for the container
     const parallelCoordinatesRef = useRef(null); // Ref for the ParallelCoordinates instance
@@ -17,27 +19,26 @@ function ParallelCoordinatesContainer() {
             // Clear any existing SVG elements in the container
             parallelContainerRef.current.innerHTML = '';
 
-            // print brushedData to console
-            console.log("Brushed Data: " , brushedData);
-
-            // Create a new ParallelCoordinates instance
+            // Create a new ParallelCoordinates instance, passing the dispatch function
             parallelCoordinatesRef.current = new ParallelCoordinates(
                 parallelContainerRef.current, 
                 data, 
                 brushedData, 
                 firstAxis, 
                 secondAxis, 
-                thirdAxis
+                thirdAxis,
+                dispatch // Pass the dispatch function
             );
         }
-    }, [data, brushedData, firstAxis, secondAxis, thirdAxis]);
+    }, [data, brushedData, firstAxis, secondAxis, thirdAxis, dispatch]);
 
     useEffect(() => {
-        if (parallelCoordinatesRef.current) {
-            // Call drawParallelCoordinates on the ParallelCoordinates instance
-            parallelCoordinatesRef.current.drawParallelCoordinates(firstAxis, secondAxis, thirdAxis);
+        if (firstAxis && secondAxis && thirdAxis) {
+            const parallelCoordinatesD3 = parallelCoordinatesRef.current;
+        
+            parallelCoordinatesD3.drawParallelCoordinates(firstAxis, secondAxis, thirdAxis);
         }
-    }, [firstAxis, secondAxis, thirdAxis]);
+    }, [firstAxis, secondAxis, thirdAxis, dispatch]);
 
     return (
         <div

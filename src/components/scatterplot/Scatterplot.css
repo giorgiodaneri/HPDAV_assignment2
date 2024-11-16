@@ -15,3 +15,15 @@ svg {
     stroke: #000;
     stroke-width: 1.5px;
 }
+
+.brush .selection {
+    fill: none;    /* Light blue fill */
+    stroke: rgb(0, 0, 0);  /* Single, solid blue border */
+    stroke-width: 2px;             /* Single line border */
+}
+
+/* Style the handles (resize corners) */
+.brush .handle {
+    stroke: none;                  /* Remove any stroke from the handles */
+    fill: none;    /* Blue color for handles */
+}
