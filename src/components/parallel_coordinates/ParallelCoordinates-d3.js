@@ -1,10 +1,13 @@
 import * as d3 from 'd3';
 
 class ParallelCoordinates {
-    constructor(container, data, brushedData) {
+    constructor(container, data, brushedData, firstAxis, secondAxis, thirdAxis) {
         this.container = container;
         this.data = data;
         this.brushedData = brushedData || []; // Initialize to an empty array if undefined
+        this.firstAxis = firstAxis;
+        this.secondAxis = secondAxis;
+        this.thirdAxis = thirdAxis;
         this.margin = { top: 30, right: 10, bottom: 25, left: 10 };
 
         // Get the width and height from the container's bounding box
@@ -15,7 +18,7 @@ class ParallelCoordinates {
         this.drawParallelCoordinates();
     }
 
-    drawParallelCoordinates() {
+    drawParallelCoordinates() {  
         const attributes = ["RentedBikeCount", "Temperature", "Rainfall"];
 
         // Define the color scale using the Turbo colormap

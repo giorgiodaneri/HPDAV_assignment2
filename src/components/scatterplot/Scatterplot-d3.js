@@ -11,7 +11,7 @@ class ScatterplotD3 {
   colorScale;
   sizeScale;
   defaultOpacity = 0.3;
-  transitionDuration = 500;
+  transitionDuration = 1000;
   circleRadius = 3;
 
   constructor(container) {
@@ -54,7 +54,7 @@ class ScatterplotD3 {
     selection
       .transition().duration(this.transitionDuration)
       .attr("transform", (item) => `translate(${this.x(item[xAttribute])},${this.y(item[yAttribute])})`);
-    this.changeBorderAndOpacity(selection);
+    // this.changeBorderAndOpacity(selection);
   }
 
   highlightSelectedItems(selectedItems) {
@@ -71,36 +71,46 @@ class ScatterplotD3 {
     this.x.domain([d3.min(visData, (item) => item[xAttribute]), d3.max(visData, (item) => item[xAttribute])]);
     this.y.domain([d3.min(visData, (item) => item[yAttribute]), d3.max(visData, (item) => item[yAttribute])]);
 
+    // Update the x-axis
     this.svg.select(".xAxisG")
-      .transition().duration(1000)
-      .call(d3.axisBottom(this.x));
+        .transition().duration(this.transitionDuration)
+        .call(d3.axisBottom(this.x));
 
-    // add text to the x-axis
+    // Remove the old x-axis label
+    this.svg.select(".xAxisG").selectAll(".axis-label").remove();
+
+    // Add text to the x-axis
     this.svg.select(".xAxisG")
-      .append("text")
-      .attr("fill", "black")
-      .attr("x", this.width)
-      .attr("y", 30)
-      .attr("text-anchor", "end")
-      .text(xAttribute)
-      .style("font-size", "14px");;
+        .append("text")
+        .attr("class", "axis-label") // Add a class for easy selection for text removal upon axis update
+        .attr("fill", "black")
+        .attr("x", this.width)
+        .attr("y", 30)
+        .attr("text-anchor", "end")
+        .text(xAttribute)
+        .style("font-size", "14px");
 
-
+    // Update the y-axis
     this.svg.select(".yAxisG")
-      .transition().duration(1000)
-      .call(d3.axisLeft(this.y));
+        .transition().duration(this.transitionDuration)
+        .call(d3.axisLeft(this.y));
 
-    // add text to the y-axis
+    // Remove the old y-axis label
+    this.svg.select(".yAxisG").selectAll(".axis-label").remove();
+
+    // Add text to the y-axis
     this.svg.select(".yAxisG")
-      .append("text")
-      .attr("fill", "black")
-      .attr("transform", "rotate(-90)")
-      .attr("y", -55)
-      .attr("dy", "0.71em")
-      .attr("text-anchor", "end")
-      .text(yAttribute)
-      .style("font-size", "14px");
-  }
+        .append("text")
+        .attr("class", "axis-label") // Add a class for easy selection
+        .attr("fill", "black")
+        .attr("transform", "rotate(-90)")
+        .attr("y", -55)
+        .attr("dy", "0.71em")
+        .attr("text-anchor", "end")
+        .text(yAttribute)
+        .style("font-size", "14px");
+}
+
 
   renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, controllerMethods) {
     this.updateAxis(data, xAttribute, yAttribute);
@@ -126,7 +136,6 @@ class ScatterplotD3 {
           itemG.append("circle")
             .attr("class", "dotCircle")
             .attr("r", this.circleRadius)
-            .attr("stroke", "red")
             .attr("r", d => this.sizeScale(d[sizeAttribute]))
             .attr("fill", d => this.colorScale(d[colorAttribute]))
 
@@ -164,8 +173,8 @@ class ScatterplotD3 {
                     itemG.attr("opacity", 0.3);  // Set all points back to 0.3
                 }
             });
-        // Append brush to the SVG
-        this.svg.append("g").attr("class", "brush").call(brush);
+          // Append brush to the SVG
+          this.svg.append("g").attr("class", "brush").call(brush);
 
           this.updateDots(itemG, xAttribute, yAttribute);
         },
@@ -176,8 +185,6 @@ class ScatterplotD3 {
           exit.remove();
         }
       );
-
-
   }
 
   clear() {

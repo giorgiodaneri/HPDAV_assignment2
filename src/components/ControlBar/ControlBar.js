@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { generateFromConfig } from "../../redux/ConfigSlice";
+import "./ControlBar.css";
 
 function ControlBar() {
     const dispatch = useDispatch();
@@ -46,30 +47,42 @@ function ControlBar() {
 
     return (
         <>
-            <form onSubmit={handleOnSubmit}>
-                <label>
-                    X-axis
-                    <select name="xAxis" value={selectedXAxis} onChange={handleOnChangeXAxis}>
+            <form className="control-bar-form" onSubmit={handleOnSubmit}>
+                <div className="input-group">
+                    <label htmlFor="xAxis">X-axis</label>
+                    <select
+                        id="xAxis"
+                        name="xAxis"
+                        value={selectedXAxis}
+                        onChange={handleOnChangeXAxis}
+                    >
                         {columnNames.map((name) => (
                             <option key={name} value={name}>
                                 {name}
                             </option>
                         ))}
                     </select>
-                </label>
+                </div>
 
-                <label>
-                    Y-axis
-                    <select name="yAxis" value={selectedYAxis} onChange={handleOnChangeYAxis}>
+                <div className="input-group">
+                    <label htmlFor="yAxis">Y-axis</label>
+                    <select
+                        id="yAxis"
+                        name="yAxis"
+                        value={selectedYAxis}
+                        onChange={handleOnChangeYAxis}
+                    >
                         {columnNames.map((name) => (
                             <option key={name} value={name}>
                                 {name}
                             </option>
                         ))}
                     </select>
-                </label>
+                </div>
 
-                <button type="submit">Generate</button>
+                <div className="button-container">
+                    <button type="submit" className="generate-button">Generate</button>
+                </div>
             </form>
         </>
     );

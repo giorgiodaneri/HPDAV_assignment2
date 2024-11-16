@@ -8,6 +8,7 @@ export const configSlice = createSlice({
   },
   reducers: {
     generateFromConfig: (state, action) => {
+      // clear the state
       // Update both xAxis and yAxis with the selected values
       state.xAxis = action.payload.xAxis;
       state.yAxis = action.payload.yAxis;

@@ -4,6 +4,9 @@ import { useEffect, useRef } from 'react';
 
 function ParallelCoordinatesContainer() {
     const data = useSelector(state => state.dataSet);
+    const firstAxis = useSelector(state => state.configRight.firstAxis);
+    const secondAxis = useSelector(state => state.configRight.secondAxis);
+    const thirdAxis = useSelector(state => state.configRight.thirdAxis);
     const brushedData = useSelector(state => state.brushedData); 
     const parallelContainerRef = useRef(null);
 
@@ -13,9 +16,10 @@ function ParallelCoordinatesContainer() {
             parallelContainerRef.current.innerHTML = '';
 
             // Create a new ParallelCoordinates instance
-            new ParallelCoordinates(parallelContainerRef.current, data, brushedData);
+            // also pass the three selected axes
+            new ParallelCoordinates(parallelContainerRef.current, data, brushedData, firstAxis, secondAxis, thirdAxis);
         }
-    }, [data, brushedData]);
+    }, [data, brushedData, firstAxis, secondAxis, thirdAxis]);
 
     return <div ref={parallelContainerRef} id="parallelCoordinatesContainer" style={{ width: '100%', height: '100%' }}></div>;
 }
