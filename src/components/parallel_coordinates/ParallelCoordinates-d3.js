@@ -5,9 +5,9 @@ class ParallelCoordinates {
         this.container = container;
         this.data = data;
         this.brushedData = brushedData || []; // Initialize to an empty array if undefined
-        this.firstAxis = firstAxis;
-        this.secondAxis = secondAxis;
-        this.thirdAxis = thirdAxis;
+        this.firstAxis = firstAxis || "RentedBikeCount"; // Initialize to "RentedBikeCount" if undefined
+        this.secondAxis = secondAxis || "Temperature"; // Initialize to "Temperature" if undefined
+        this.thirdAxis = thirdAxis || "Rainfall"; // Initialize to "Rainfall" if undefined
         this.margin = { top: 30, right: 10, bottom: 25, left: 10 };
 
         // Get the width and height from the container's bounding box
@@ -18,8 +18,17 @@ class ParallelCoordinates {
         this.drawParallelCoordinates();
     }
 
-    drawParallelCoordinates() {  
-        const attributes = ["RentedBikeCount", "Temperature", "Rainfall"];
+    drawParallelCoordinates(firstAxis, secondAxis, thirdAxis) {
+        // Update the axes based on the selected attributes
+        if(firstAxis && secondAxis && thirdAxis) {
+            this.firstAxis = firstAxis;
+            this.secondAxis = secondAxis;
+            this.thirdAxis = thirdAxis;
+        }
+        
+        // Define the attributes to be used in the parallel coordinates
+        // const attributes = ["RentedBikeCount", "Temperature", "Rainfall"];
+        const attributes = [this.firstAxis, this.secondAxis, this.thirdAxis];
 
         // Define the color scale using the Turbo colormap
         const colorScale = d3.scaleSequential(d3.interpolatePlasma)
