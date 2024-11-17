@@ -7,7 +7,6 @@ export const brushedDataSliceSecond = createSlice({
 },
   reducers: {
     setBrushedDataParallelCoords: (state, action) => {
-        console.log("Brushed data inside reducer:", action.payload);
         state.brushedDataParallelCoords = action.payload; // Append new data to the existing array
     },
   }

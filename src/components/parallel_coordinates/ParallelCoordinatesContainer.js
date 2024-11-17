@@ -7,6 +7,9 @@ function ParallelCoordinatesContainer() {
     const firstAxis = useSelector(state => state.configRight.firstAxis);
     const secondAxis = useSelector(state => state.configRight.secondAxis);
     const thirdAxis = useSelector(state => state.configRight.thirdAxis);
+    const invertX = useSelector(state => state.configRight.invertX);
+    const invertY = useSelector(state => state.configRight.invertY);
+    const invertZ = useSelector(state => state.configRight.invertZ);
     const brushedData = useSelector(state => state.brushedData); 
     const dispatch = useDispatch();
 
@@ -26,18 +29,21 @@ function ParallelCoordinatesContainer() {
                 firstAxis, 
                 secondAxis, 
                 thirdAxis,
+                invertX,
+                invertY,
+                invertZ,
                 dispatch // Pass the dispatch function
             );
         }
-    }, [data, brushedData, firstAxis, secondAxis, thirdAxis, dispatch]);
+    }, [data, brushedData, firstAxis, secondAxis, thirdAxis, invertX, invertY, invertZ, dispatch]);
 
     useEffect(() => {
         if (firstAxis && secondAxis && thirdAxis) {
             const parallelCoordinatesD3 = parallelCoordinatesRef.current;
         
-            parallelCoordinatesD3.drawParallelCoordinates(firstAxis, secondAxis, thirdAxis);
+            parallelCoordinatesD3.drawParallelCoordinates(firstAxis, secondAxis, thirdAxis, invertX, invertY, invertZ); 
         }
-    }, [firstAxis, secondAxis, thirdAxis, dispatch]);
+    }, [firstAxis, secondAxis, thirdAxis, invertX, invertY, invertZ, dispatch]);
 
     return (
         <div

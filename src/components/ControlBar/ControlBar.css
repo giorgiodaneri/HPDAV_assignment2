@@ -10,11 +10,6 @@
     font-size: 14px;
 }
 
-.button-container {
-    display: flex;
-    align-items: center; /* Aligns button vertically with dropdowns */
-}
-
 .generate-button {
     padding: 5px 10px;
     margin-top: 20px;

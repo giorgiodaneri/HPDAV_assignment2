@@ -82,7 +82,7 @@ class ScatterplotD3 {
         .transition().duration(this.transitionDuration)
         .call(d3.axisBottom(this.x));
 
-    // Remove the old x-axis label
+    // Remove the old x-axis label, so that it can be replaced by the new one
     this.svg.select(".xAxisG").selectAll(".axis-label").remove();
 
     // Add text to the x-axis
@@ -134,19 +134,12 @@ isBrushed(d) {
       return false; // No brushed data, all points will be shown with default opacity
   }
 
-  console.log("Brushed data from Parallel Coords:", this.brushedDataParallelCoords);
-  // if brushData is not empty, print it
-  if(this.brushedDataParallelCoords.brushedDataParallelCoords.length > 0)
-  {
-    console.log("Brushed data:", this.brushedDataParallelCoords);
-  }
   const uniqueId = this.getUniqueId(d);  // Get unique identifier for the current data point
 
   // Iterate over the brushedData and compare the uniqueIds
   for (let i = 0; i < this.brushedDataParallelCoords.brushedDataParallelCoords.length; i++) {
       const brushed = this.brushedDataParallelCoords.brushedDataParallelCoords[i];
       if (this.getUniqueId(brushed) === uniqueId) {
-          console.log("Match found for:", uniqueId);
           return true; // If a match is found, return true
       }
   }

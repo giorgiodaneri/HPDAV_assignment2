@@ -3,7 +3,7 @@ import { setBrushedDataParallelCoords } from '../../redux/BrushedDataSliceSecond
 
 
 class ParallelCoordinates {
-    constructor(container, data, brushedData, firstAxis, secondAxis, thirdAxis, dispatch) {
+    constructor(container, data, brushedData, firstAxis, secondAxis, thirdAxis, invertX, invertY, invertZ, dispatch) {
         this.container = container;
         this.data = data;
         this.brushedData = brushedData || []; // Initialize to an empty array if undefined
@@ -12,6 +12,9 @@ class ParallelCoordinates {
         this.thirdAxis = thirdAxis || "Rainfall"; // Initialize to "Rainfall" if undefined
         this.margin = { top: 30, right: 10, bottom: 25, left: 10 };
         this.dispatch = dispatch;
+        this.invertX = invertX || false;
+        this.invertY = invertY || false;
+        this.invertZ = invertZ || false;
 
         // Get the width and height from the container's bounding box
         const containerRect = container.getBoundingClientRect();
@@ -21,15 +24,18 @@ class ParallelCoordinates {
         this.drawParallelCoordinates();
     }
 
-    drawParallelCoordinates(firstAxis, secondAxis, thirdAxis) {
+    drawParallelCoordinates(firstAxis, secondAxis, thirdAxis, invertX, invertY, invertZ) {
         
         // Update the axes based on the selected attributes
-        if (firstAxis && secondAxis && thirdAxis) {
+        if (firstAxis && secondAxis && thirdAxis && invertX && invertY && invertZ) {
             this.firstAxis = firstAxis;
             this.secondAxis = secondAxis;
             this.thirdAxis = thirdAxis;
+            this.invertX = invertX;
+            this.invertY = invertY;
+            this.invertZ = invertZ;
         }
-    
+
         const attributes = [this.firstAxis, this.secondAxis, this.thirdAxis];
         const colorScale = d3.scaleSequential(d3.interpolatePlasma)
             .domain(d3.extent(this.data, d => d.Humidity));
@@ -47,7 +53,13 @@ class ParallelCoordinates {
         attributes.forEach(attr => {
             yScales[attr] = d3.scaleLinear()
                 .domain(d3.extent(this.data, d => d[attr]))
-                .range([this.height, 0]);
+                .range(
+                    (attr === this.firstAxis && this.invertX) || 
+                    (attr === this.secondAxis && this.invertY) || 
+                    (attr === this.thirdAxis && this.invertZ)
+                        ? [0, this.height] // Inverted range for the axis
+                        : [this.height, 0] // Default range
+                );
         });
     
         const xScale = d3.scalePoint()
@@ -148,11 +160,6 @@ class ParallelCoordinates {
             return false; // No brushed data, all points will be shown with default opacity
         }
 
-        // if brushData is not empty, print it
-        if(this.brushedData.brushedData.length > 0)
-        {
-            // console.log("Brushed data:", this.brushedData);
-        }
         const uniqueId = this.getUniqueId(d);  // Get unique identifier for the current data point
 
         // Iterate over the brushedData and compare the uniqueIds
