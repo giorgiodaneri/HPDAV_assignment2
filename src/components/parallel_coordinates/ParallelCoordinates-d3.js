@@ -7,9 +7,9 @@ class ParallelCoordinates {
         this.container = container;
         this.data = data;
         this.brushedData = brushedData || []; // Initialize to an empty array if undefined
-        this.firstAxis = firstAxis || "Temperature"; // Initialize to "RentedBikeCount" if undefined
-        this.secondAxis = secondAxis || "RentedBikeCount"; // Initialize to "Temperature" if undefined
-        this.thirdAxis = thirdAxis || "Rainfall"; // Initialize to "Rainfall" if undefined
+        this.firstAxis = firstAxis || "Temperature";
+        this.secondAxis = secondAxis || "RentedBikeCount";
+        this.thirdAxis = thirdAxis || "Rainfall";
         this.margin = { top: 30, right: 10, bottom: 25, left: 10 };
         this.dispatch = dispatch;
         this.invertX = invertX || false;
@@ -25,7 +25,6 @@ class ParallelCoordinates {
     }
 
     drawParallelCoordinates(firstAxis, secondAxis, thirdAxis, invertX, invertY, invertZ) {
-        
         // Update the axes based on the selected attributes
         if (firstAxis && secondAxis && thirdAxis && invertX && invertY && invertZ) {
             this.firstAxis = firstAxis;
@@ -39,114 +38,163 @@ class ParallelCoordinates {
         const attributes = [this.firstAxis, this.secondAxis, this.thirdAxis];
         const colorScale = d3.scaleSequential(d3.interpolatePlasma)
             .domain(d3.extent(this.data, d => d.Humidity));
-    
-        d3.select(this.container).selectAll("svg").remove();
-    
-        const svg = d3.select(this.container)
+
+        // Create SVG or reuse the existing one
+        let svg = d3.select(this.container).selectAll("svg")
+            .data([null]); // Bind single data point for the container
+        svg = svg.enter()
             .append("svg")
+            .merge(svg)
             .attr("width", this.width + this.margin.left + this.margin.right)
-            .attr("height", this.height + this.margin.top + this.margin.bottom)
+            .attr("height", this.height + this.margin.top + this.margin.bottom);
+
+        const g = svg.selectAll("g.main-group")
+            .data([null]); // Bind a single group
+        const mainGroup = g.enter()
             .append("g")
+            .attr("class", "main-group")
+            .merge(g)
             .attr("transform", `translate(${this.margin.left},${this.margin.top})`);
-    
+
+        // Create or update yScales for each attribute
         const yScales = {};
         attributes.forEach(attr => {
             yScales[attr] = d3.scaleLinear()
                 .domain(d3.extent(this.data, d => d[attr]))
                 .range(
-                    (attr === this.firstAxis && this.invertX) || 
-                    (attr === this.secondAxis && this.invertY) || 
+                    (attr === this.firstAxis && this.invertX) ||
+                    (attr === this.secondAxis && this.invertY) ||
                     (attr === this.thirdAxis && this.invertZ)
                         ? [0, this.height] // Inverted range for the axis
                         : [this.height, 0] // Default range
                 );
         });
-    
+
         const xScale = d3.scalePoint()
             .range([0, this.width])
             .padding(0.5)
             .domain(attributes);
-    
-        svg.selectAll(".axis")
-            .data(attributes)
-            .enter()
+
+        // Handle axes (enter, update, exit)
+        const axes = mainGroup.selectAll(".axis")
+            .data(attributes);
+
+        axes.enter()
             .append("g")
             .attr("class", "axis")
+            .merge(axes)
             .attr("transform", d => `translate(${xScale(d)},0)`)
             .each(function (d) {
-                d3.select(this).call(d3.axisLeft(yScales[d]));
+                if (d === this.thirdAxis) {
+                    d3.select(this).call(d3.axisRight(yScales[d])); // Right-aligned axis for third axis
+                } else {
+                    d3.select(this).call(d3.axisLeft(yScales[d]));
+                }
             });
-    
-        svg.selectAll(".axis-label")
-            .data(attributes)
-            .enter()
+
+        axes.exit().remove();
+
+        // Handle axis labels (enter, update, exit)
+        const labels = mainGroup.selectAll(".axis-label")
+            .data(attributes);
+
+        labels.enter()
             .append("text")
             .attr("class", "axis-label")
+            .merge(labels)
             .attr("x", d => xScale(d))
             .attr("y", this.height + 20)
             .attr("text-anchor", "middle")
             .style("font-size", "16px")
             .text(d => d);
-    
-        // make the axes ticks bigger
-        svg.selectAll(".axis").selectAll("text").style("font-size", "14px");
-    
+
+        labels.exit().remove();
+
+        // Adjust tick size
+        mainGroup.selectAll(".axis").selectAll("text").style("font-size", "14px");
+
+        // Line generator for paths
         const lineGenerator = d3.line()
             .curve(d3.curveBasis)
             .x((d, i) => xScale(attributes[i]))
             .y((d, i) => yScales[attributes[i]](d));
-    
-        svg.selectAll(".line")
-            .data(this.data)
-            .enter()
+
+        // Handle lines (enter, update, exit)
+        const lines = mainGroup.selectAll(".line")
+            .data(this.data);
+
+        lines.enter()
             .append("path")
             .attr("class", "line")
+            .merge(lines)
             .attr("d", d => lineGenerator(attributes.map(attr => d[attr])))
             .style("fill", "none")
             .style("stroke", d => colorScale(d.Humidity))
             .style("opacity", d => {
                 return this.isBrushed(d) ? 0.4 : 0.02;
             });
-    
-        // Add a brush to the first axis on vertical orientation
-        const brush = d3.brushY()
-            .extent([[xScale(this.firstAxis) - 5, 0], [xScale(this.firstAxis) + 5, this.height]])
-            .on("start brush end", (event) => {
-                const selection = event.selection;
-                if (selection) {
-                    const [y0, y1] = event.selection;
-                    const brushedData = this.data.filter(d => {
-                        const value = yScales[this.firstAxis](d[this.firstAxis]);
-                        return y0 <= value && value <= y1;
-                    });
-    
-                    svg.selectAll(".line")
-                        .style("opacity", d => {
-                            return brushedData.includes(d) ? 0.4 : 0.02;
-                        });
-    
-                    // Dispatch the brushed data to the Redux store
-                    if(event.type === "end") {
-                        this.dispatch(setBrushedDataParallelCoords(brushedData));
-                    }
-                } else {
-                    // Reset if brush is cleared
-                    svg.selectAll(".line").style("opacity", 0.02);
-                    // call reducer to store empty brushed data
-                    if(event.type === "end")
-                    {
-                        this.dispatch(setBrushedDataParallelCoords([]));
-                    }
+
+        lines.exit().remove();
+
+        // Brushing remains untouched
+        let brushSelections = {
+            firstAxis: null,
+            thirdAxis: null,
+        };
+
+        // Update the function to handle multiple brushes
+        const handleBrush = (axis, event, yScale, data) => {
+            const selection = event.selection;
+            brushSelections[axis] = selection;
+
+            if (brushSelections.firstAxis || brushSelections.thirdAxis) {
+                const brushedData = data.filter(d => {
+                    const firstBrushValid = !brushSelections.firstAxis ||
+                        (yScale[this.firstAxis](d[this.firstAxis]) >= brushSelections.firstAxis[0] &&
+                        yScale[this.firstAxis](d[this.firstAxis]) <= brushSelections.firstAxis[1]);
+                    const thirdBrushValid = !brushSelections.thirdAxis ||
+                        (yScale[this.thirdAxis](d[this.thirdAxis]) >= brushSelections.thirdAxis[0] &&
+                        yScale[this.thirdAxis](d[this.thirdAxis]) <= brushSelections.thirdAxis[1]);
+
+                    return firstBrushValid && thirdBrushValid;
+                });
+
+                mainGroup.selectAll(".line")
+                    .style("opacity", d => brushedData.includes(d) ? 0.4 : 0.02);
+
+                if (event.type === "end") {
+                    this.dispatch(setBrushedDataParallelCoords(brushedData));
                 }
-            });
-    
-        // Append brush with custom styles
-        svg.append("g")
+            } else {
+                // Reset if both brushes are cleared
+                mainGroup.selectAll(".line").style("opacity", 0.02);
+                if (event.type === "end") {
+                    this.dispatch(setBrushedDataParallelCoords([]));
+                }
+            }
+        };
+
+        // Add brushes to both the first and third axes
+        const brushFirstAxis = d3.brushY()
+            .extent([[xScale(this.firstAxis) - 5, 0], [xScale(this.firstAxis) + 5, this.height]])
+            .on("start brush end", (event) => handleBrush("firstAxis", event, yScales, this.data));
+
+        const brushThirdAxis = d3.brushY()
+            .extent([[xScale(this.thirdAxis) - 5, 0], [xScale(this.thirdAxis) + 5, this.height]])
+            .on("start brush end", (event) => handleBrush("thirdAxis", event, yScales, this.data));
+
+        // Append brushes to the respective axes
+        mainGroup.selectAll(".brush").remove();
+
+        mainGroup.append("g")
             .attr("class", "brush")
-            .call(brush)
+            .call(brushFirstAxis);
+
+        mainGroup.append("g")
+            .attr("class", "brush")
+            .call(brushThirdAxis);
     }
       
-
     // Generate a unique identifier for each data point
     getUniqueId(d) {
         // print current date and hour
@@ -169,7 +217,6 @@ class ParallelCoordinates {
                 return true; // If a match is found, return true
             }
         }
-
         return false; // If no match is found, return false
     }
 }

@@ -242,70 +242,70 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
   const dots = this.svg.select(".dots-layer").selectAll(".dotG")
       .data(data, (itemData) => itemData.index);
 
-    dots.join(
-      (enter) => {
-          const itemG = enter.append("g")
-              .attr("class", "dotG")
-              .style("opacity", this.defaultOpacity)
-              .on("mouseover", (event, itemData) => {
-                  tooltipDiv
-                      .style("opacity", 1)
-                      .html(
-                          `<strong>${xAttribute}:</strong> ${itemData[xAttribute]}<br>
-                            <strong>${yAttribute}:</strong> ${itemData[yAttribute]}<br>
-                            <strong>${colorAttribute}:</strong> ${itemData[colorAttribute]}<br>`
-                      );
-              })
-              .on("mousemove", (event) => {
-                  const svgRect = this.container.getBoundingClientRect();
-                  tooltipDiv
-                      .style("left", `${event.clientX - svgRect.left + 10}px`)
-                      .style("top", `${event.clientY - svgRect.top - 20}px`);
-              })
-              .on("mouseout", () => {
-                  tooltipDiv.style("opacity", 0);
-              });
-  
-          itemG.append("circle")
-              .attr("class", "dotCircle")
-              .attr("r", this.circleRadius)
-              .attr("r", d => this.sizeScale(d[sizeAttribute]))
-              .attr("fill", d => this.colorScale(d[colorAttribute]));
-  
-          this.updateDots(itemG, xAttribute, yAttribute);
-      },
-      (update) => {
-          update
-              .on("mouseover", (event, itemData) => {
-                  tooltipDiv
-                      .style("opacity", 1)
-                      .html(
-                          `<strong>${xAttribute}:</strong> ${itemData[xAttribute]}<br>
-                            <strong>${yAttribute}:</strong> ${itemData[yAttribute]}<br>
-                            <strong>${colorAttribute}:</strong> ${itemData[colorAttribute]}`
-                      );
-              })
-              .on("mousemove", (event) => {
-                  const svgRect = this.container.getBoundingClientRect();
-                  tooltipDiv
-                      .style("left", `${event.clientX - svgRect.left + 10}px`)
-                      .style("top", `${event.clientY - svgRect.top - 20}px`);
-              })
-              .on("mouseout", () => {
-                  tooltipDiv.style("opacity", 0);
-              })
-              .select("circle")
-              .transition()
-              .duration(500)
-              .attr("r", d => this.sizeScale(d[sizeAttribute]))
-              .attr("fill", d => this.colorScale(d[colorAttribute]));
-  
-          this.updateDots(update, xAttribute, yAttribute);
-      },
-      (exit) => {
-          exit.remove();
-      }
-  );    
+  dots.join(
+    (enter) => {
+        const itemG = enter.append("g")
+            .attr("class", "dotG")
+            .style("opacity", this.defaultOpacity)
+            .on("mouseover", (event, itemData) => {
+                tooltipDiv
+                    .style("opacity", 1)
+                    .html(
+                        `<strong>${xAttribute}:</strong> ${itemData[xAttribute]}<br>
+                          <strong>${yAttribute}:</strong> ${itemData[yAttribute]}<br>
+                          <strong>${colorAttribute}:</strong> ${itemData[colorAttribute]}<br>`
+                    );
+            })
+            .on("mousemove", (event) => {
+                const svgRect = this.container.getBoundingClientRect();
+                tooltipDiv
+                    .style("left", `${event.clientX - svgRect.left + 10}px`)
+                    .style("top", `${event.clientY - svgRect.top - 20}px`);
+            })
+            .on("mouseout", () => {
+                tooltipDiv.style("opacity", 0);
+            });
+
+        itemG.append("circle")
+            .attr("class", "dotCircle")
+            .attr("r", this.circleRadius)
+            .attr("r", d => this.sizeScale(d[sizeAttribute]))
+            .attr("fill", d => this.colorScale(d[colorAttribute]));
+
+        this.updateDots(itemG, xAttribute, yAttribute);
+    },
+    (update) => {
+        update
+            .on("mouseover", (event, itemData) => {
+                tooltipDiv
+                    .style("opacity", 1)
+                    .html(
+                        `<strong>${xAttribute}:</strong> ${itemData[xAttribute]}<br>
+                          <strong>${yAttribute}:</strong> ${itemData[yAttribute]}<br>
+                          <strong>${colorAttribute}:</strong> ${itemData[colorAttribute]}`
+                    );
+            })
+            .on("mousemove", (event) => {
+                const svgRect = this.container.getBoundingClientRect();
+                tooltipDiv
+                    .style("left", `${event.clientX - svgRect.left + 10}px`)
+                    .style("top", `${event.clientY - svgRect.top - 20}px`);
+            })
+            .on("mouseout", () => {
+                tooltipDiv.style("opacity", 0);
+            })
+            .select("circle")
+            .transition()
+            .duration(500)
+            .attr("r", d => this.sizeScale(d[sizeAttribute]))
+            .attr("fill", d => this.colorScale(d[colorAttribute]));
+
+        this.updateDots(update, xAttribute, yAttribute);
+    },
+    (exit) => {
+        exit.remove();
+    }
+  );   
 }
 
 
