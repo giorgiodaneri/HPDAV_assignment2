@@ -8,6 +8,7 @@ class ScatterplotD3 {
   svg;
   x;
   y;
+  colorAttribute;
   colorScale;
   sizeScale;
   brushedDataParallelCoords;
@@ -170,50 +171,50 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
       .domain(d3.extent(data, (d) => d[sizeAttribute]))
       .range([1, 6]);
 
-      const brush = d3.brush()
-      .extent([[0, 0], [this.size.width, this.size.height]]) // Define the extent of the brush
-      .on("start brush end", (event) => {
-          const selection = event.selection;
-          if (selection) {
-              const [[x0, y0], [x1, y1]] = selection;
+  const brush = d3.brush()
+  .extent([[0, 0], [this.size.width, this.size.height]]) // Define the extent of the brush
+  .on("start brush end", (event) => {
+      const selection = event.selection;
+      if (selection) {
+          const [[x0, y0], [x1, y1]] = selection;
 
-              // Adjust coordinates for the margin
-              const adjustedX0 = x0 - this.margin.left;
-              const adjustedX1 = x1 - this.margin.left;
-              const adjustedY0 = y0 - this.margin.top;
-              const adjustedY1 = y1 - this.margin.top;
-    
-              const selectedData = data.filter(d => {
+          // Adjust coordinates for the margin
+          const adjustedX0 = x0 - this.margin.left;
+          const adjustedX1 = x1 - this.margin.left;
+          const adjustedY0 = y0 - this.margin.top;
+          const adjustedY1 = y1 - this.margin.top;
+
+          const selectedData = data.filter(d => {
+              const cx = this.x(d[xAttribute]);
+              const cy = this.y(d[yAttribute]);
+              return adjustedX0 <= cx && cx <= adjustedX1 && adjustedY0 <= cy && cy <= adjustedY1;
+          });
+
+          this.svg.selectAll(".dotG")
+              .style("opacity", d => {
                   const cx = this.x(d[xAttribute]);
                   const cy = this.y(d[yAttribute]);
-                  return adjustedX0 <= cx && cx <= adjustedX1 && adjustedY0 <= cy && cy <= adjustedY1;
-              });
-    
-              this.svg.selectAll(".dotG")
-                  .style("opacity", d => {
-                      const cx = this.x(d[xAttribute]);
-                      const cy = this.y(d[yAttribute]);
-                      return adjustedX0 <= cx && cx <= adjustedX1 && adjustedY0 <= cy && cy <= adjustedY1 ? 0.8 : 0.3;
-                    });
-    
-              if (event.type === "end") {
-                  controllerMethods.handleOnBrush(selectedData);
-              }
-          } else {
-              this.svg.selectAll(".dotG")
-                  .style("opacity", 0.3);
-    
-              if (event.type === "end") {
-                  // Dispatch an empty array to clear the brushed data
-                  controllerMethods.handleOnBrush([]);
-              }
+                  return adjustedX0 <= cx && cx <= adjustedX1 && adjustedY0 <= cy && cy <= adjustedY1 ? 0.8 : 0.3;
+                });
+
+          if (event.type === "end") {
+              controllerMethods.handleOnBrush(selectedData);
           }
-      });
+      } else {
+          this.svg.selectAll(".dotG")
+              .style("opacity", 0.3);
+
+          if (event.type === "end") {
+              // Dispatch an empty array to clear the brushed data
+              controllerMethods.handleOnBrush([]);
+          }
+      }
+  });
     
-    // Apply the brush to the scatterplot (styling is done in the CSS file, fine-grained control)
-    this.svg.append("g").attr("class", "brush").call(brush);
-      // this.svg.select("g").selectAll(".brush")
-      // .call(brush);  
+  // Apply the brush to the scatterplot (styling is done in the CSS file, fine-grained control)
+  this.svg.append("g").attr("class", "brush").call(brush);
+    // this.svg.select("g").selectAll(".brush")
+    // .call(brush);  
 
   this.svg.select("g").selectAll(".dotG")
       .data(data, (itemData) => itemData.index)
@@ -235,6 +236,13 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
               this.updateDots(itemG, xAttribute, yAttribute);
           },
           (update) => {
+              // Update existing dots
+              update.select("circle")
+              .transition()
+              .duration(500) // Add smooth transition for visual effect
+              .attr("r", d => this.sizeScale(d[sizeAttribute]))
+              .attr("fill", d => this.colorScale(d[colorAttribute]));
+
               this.updateDots(update, xAttribute, yAttribute);
           },
           (exit) => {

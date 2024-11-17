@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { generateFromConfig } from "../../redux/ConfigSlice";
 import "./ControlBar.css";
+import { color } from "d3";
 
 function ControlBar() {
     const dispatch = useDispatch();
 
     // Fetch the current configuration from the Redux store
-    const genConfig = useSelector((state) => state.config || { xAxis: '', yAxis: '' });
+    const genConfig = useSelector((state) => state.config || { xAxis: '', yAxis: '', color: '' });
 
     // Fetch column names from the data slice
     const data = useSelector((state) => state.dataSet);
@@ -16,6 +17,7 @@ function ControlBar() {
     // Local state for x and y axis selection
     const [selectedXAxis, setSelectedXAxis] = useState(genConfig.xAxis || '');
     const [selectedYAxis, setSelectedYAxis] = useState(genConfig.yAxis || '');
+    const [selectedColor , setSelectedColor] = useState(genConfig.color || '');
 
     // Extract column names when data is loaded
     useEffect(() => {
@@ -34,6 +36,10 @@ function ControlBar() {
         setSelectedYAxis(event.target.value);
     };
 
+    const handleOnChangeColor = (event) => {
+        setSelectedColor(event.target.value);  
+    };
+
     // Dispatch selected x and y axes to the Redux store only on form submit
     const handleOnSubmit = (event) => {
         event.preventDefault();
@@ -41,7 +47,8 @@ function ControlBar() {
         // Dispatch selected axes to Redux
         dispatch(generateFromConfig({
             xAxis: selectedXAxis,
-            yAxis: selectedYAxis
+            yAxis: selectedYAxis,
+            color: selectedColor
         }));
     };
 
@@ -71,6 +78,22 @@ function ControlBar() {
                         name="yAxis"
                         value={selectedYAxis}
                         onChange={handleOnChangeYAxis}
+                    >
+                        {columnNames.map((name) => (
+                            <option key={name} value={name}>
+                                {name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="input-group">
+                    <label htmlFor="color">Color</label>
+                    <select
+                        id="color"
+                        name="color"
+                        value={selectedColor}
+                        onChange={handleOnChangeColor}
                     >
                         {columnNames.map((name) => (
                             <option key={name} value={name}>
