@@ -88,7 +88,7 @@ function ControlBarRight() {
                     </label>
 
                     <label className="form-label">
-                        Third axis
+                        Color
                         <select name="Color" value={selectedColor} onChange={handleOnChangeColor}>
                             {columnNames.map((name) => (
                                 <option key={name} value={name}>

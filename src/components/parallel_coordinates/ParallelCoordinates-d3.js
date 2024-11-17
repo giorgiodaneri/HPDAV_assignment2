@@ -209,12 +209,6 @@ class ParallelCoordinates {
             .attr("class", "brush")
             .call(brushsecondAxis);
     }
-      
-    // Generate a unique identifier for each data point
-    getUniqueId(d) {
-        // print current date and hour
-        return `${d.Date}-${d.Hour}`;  // Use key attributes to create a unique ID
-    }
 
     // Check if a data point is inside the brushed data by iterating over brushedData explicitly
     isBrushed(d) {
@@ -223,12 +217,12 @@ class ParallelCoordinates {
             return false; // No brushed data, all points will be shown with default opacity
         }
 
-        const uniqueId = this.getUniqueId(d);  // Get unique identifier for the current data point
-
+        // Get unique identifier for the current data point
+        const identifier = d.index;
         // Iterate over the brushedData and compare the uniqueIds
         for (let i = 0; i < this.brushedData.brushedData.length; i++) {
             const brushed = this.brushedData.brushedData[i];
-            if (this.getUniqueId(brushed) === uniqueId) {
+            if (brushed.index === identifier) {
                 return true; // If a match is found, return true
             }
         }
