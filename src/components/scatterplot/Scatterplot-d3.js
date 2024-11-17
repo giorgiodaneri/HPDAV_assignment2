@@ -155,7 +155,25 @@ clearBrush() {
 
 
 renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, brushedDataParallelCoords, controllerMethods) {
-  // if brushedDataParallelCoords is not empty, then update the opacity of the dots
+  // Create a tooltip element if it doesn't already exist
+  const tooltip = d3.select(this.container)
+      .select(".scatterplot-tooltip");
+  if (tooltip.empty()) {
+      d3.select(this.container)
+          .append("div")
+          .attr("class", "scatterplot-tooltip")
+          .style("position", "absolute")
+          .style("background-color", "white")
+          .style("border", "1px solid #ccc")
+          .style("border-radius", "4px")
+          .style("padding", "8px")
+          .style("pointer-events", "none")
+          .style("opacity", 0);
+  }
+
+  const tooltipDiv = d3.select(".scatterplot-tooltip");
+
+  // If brushedDataParallelCoords is not empty, update opacity of dots
   if (brushedDataParallelCoords) {
       this.brushedDataParallelCoords = brushedDataParallelCoords;
       // Clear the scatter plot brush if external brushing occurs
@@ -171,85 +189,125 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
       .domain(d3.extent(data, (d) => d[sizeAttribute]))
       .range([1, 6]);
 
+  // Clear previous brush and create a new brush layer
+  this.svg.select(".brush-layer").remove();
+  const brushLayer = this.svg.append("g")
+      .attr("class", "brush-layer")
+      .attr("transform", `translate(${this.margin.left},${this.margin.top})`);
+
+  const dotsLayer = this.svg.select(".dots-layer");
+  if (dotsLayer.empty()) {
+      this.svg.append("g")
+          .attr("class", "dots-layer")
+          .attr("transform", `translate(${this.margin.left},${this.margin.top})`);
+  }
+
   const brush = d3.brush()
-  .extent([[0, 0], [this.size.width, this.size.height]]) // Define the extent of the brush
-  .on("start brush end", (event) => {
-      const selection = event.selection;
-      if (selection) {
-          const [[x0, y0], [x1, y1]] = selection;
+      .extent([[0, 0], [this.width, this.height]])
+      .on("start brush end", (event) => {
+          const selection = event.selection;
+          if (selection) {
+              const [[x0, y0], [x1, y1]] = selection;
 
-          // Adjust coordinates for the margin
-          const adjustedX0 = x0 - this.margin.left;
-          const adjustedX1 = x1 - this.margin.left;
-          const adjustedY0 = y0 - this.margin.top;
-          const adjustedY1 = y1 - this.margin.top;
-
-          const selectedData = data.filter(d => {
-              const cx = this.x(d[xAttribute]);
-              const cy = this.y(d[yAttribute]);
-              return adjustedX0 <= cx && cx <= adjustedX1 && adjustedY0 <= cy && cy <= adjustedY1;
-          });
-
-          this.svg.selectAll(".dotG")
-              .style("opacity", d => {
+              const selectedData = data.filter(d => {
                   const cx = this.x(d[xAttribute]);
                   const cy = this.y(d[yAttribute]);
-                  return adjustedX0 <= cx && cx <= adjustedX1 && adjustedY0 <= cy && cy <= adjustedY1 ? 0.8 : 0.3;
-                });
+                  return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;
+              });
 
-          if (event.type === "end") {
-              controllerMethods.handleOnBrush(selectedData);
-          }
-      } else {
-          this.svg.selectAll(".dotG")
-              .style("opacity", 0.3);
-
-          if (event.type === "end") {
-              // Dispatch an empty array to clear the brushed data
-              controllerMethods.handleOnBrush([]);
-          }
-      }
-  });
-    
-  // Apply the brush to the scatterplot (styling is done in the CSS file, fine-grained control)
-  this.svg.append("g").attr("class", "brush").call(brush);
-    // this.svg.select("g").selectAll(".brush")
-    // .call(brush);  
-
-  this.svg.select("g").selectAll(".dotG")
-      .data(data, (itemData) => itemData.index)
-      .join(
-          (enter) => {
-              const itemG = enter.append("g")
-                  .attr("class", "dotG")
-                  .style("opacity", this.defaultOpacity)
-                  .on("click", (event, itemData) => {
-                      controllerMethods.handleOnClick(itemData);
+              this.svg.selectAll(".dotG")
+                  .style("opacity", d => {
+                      const cx = this.x(d[xAttribute]);
+                      const cy = this.y(d[yAttribute]);
+                      return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1 ? 0.8 : 0.3;
                   });
 
-              itemG.append("circle")
-                  .attr("class", "dotCircle")
-                  .attr("r", this.circleRadius)
-                  .attr("r", d => this.sizeScale(d[sizeAttribute]))
-                  .attr("fill", d => this.colorScale(d[colorAttribute]));
+              if (event.type === "end") {
+                  controllerMethods.handleOnBrush(selectedData);
+              }
+          } else {
+              this.svg.selectAll(".dotG")
+                  .style("opacity", 0.3);
 
-              this.updateDots(itemG, xAttribute, yAttribute);
-          },
-          (update) => {
-              // Update existing dots
-              update.select("circle")
-              .transition()
-              .duration(500) // Add smooth transition for visual effect
+              if (event.type === "end") {
+                  controllerMethods.handleOnBrush([]);
+              }
+          }
+      });
+
+  // Apply the brush to the brush layer
+  brushLayer.call(brush);
+
+  // Render dots
+  const dots = this.svg.select(".dots-layer").selectAll(".dotG")
+      .data(data, (itemData) => itemData.index);
+
+    dots.join(
+      (enter) => {
+          const itemG = enter.append("g")
+              .attr("class", "dotG")
+              .style("opacity", this.defaultOpacity)
+              .on("mouseover", (event, itemData) => {
+                  tooltipDiv
+                      .style("opacity", 1)
+                      .html(
+                          `<strong>${xAttribute}:</strong> ${itemData[xAttribute]}<br>
+                            <strong>${yAttribute}:</strong> ${itemData[yAttribute]}<br>
+                            <strong>${colorAttribute}:</strong> ${itemData[colorAttribute]}<br>`
+                      );
+              })
+              .on("mousemove", (event) => {
+                  const svgRect = this.container.getBoundingClientRect();
+                  tooltipDiv
+                      .style("left", `${event.clientX - svgRect.left + 10}px`)
+                      .style("top", `${event.clientY - svgRect.top - 20}px`);
+              })
+              .on("mouseout", () => {
+                  tooltipDiv.style("opacity", 0);
+              });
+  
+          itemG.append("circle")
+              .attr("class", "dotCircle")
+              .attr("r", this.circleRadius)
               .attr("r", d => this.sizeScale(d[sizeAttribute]))
               .attr("fill", d => this.colorScale(d[colorAttribute]));
-
-              this.updateDots(update, xAttribute, yAttribute);
-          },
-          (exit) => {
-              exit.remove();
-          }
-      );
+  
+          this.updateDots(itemG, xAttribute, yAttribute);
+      },
+      (update) => {
+          update
+              .on("mouseover", (event, itemData) => {
+                  tooltipDiv
+                      .style("opacity", 1)
+                      .html(
+                          `<strong>${xAttribute}:</strong> ${itemData[xAttribute]}<br>
+                            <strong>${yAttribute}:</strong> ${itemData[yAttribute]}<br>
+                            <strong>${colorAttribute}:</strong> ${itemData[colorAttribute]}`
+                      );
+              })
+              .on("mousemove", (event) => {
+                  const svgRect = this.container.getBoundingClientRect();
+                  tooltipDiv
+                      .style("left", `${event.clientX - svgRect.left + 10}px`)
+                      .style("top", `${event.clientY - svgRect.top - 20}px`);
+              })
+              .on("mouseout", () => {
+                  tooltipDiv.style("opacity", 0);
+              })
+              .select("circle")
+              .transition()
+              .duration(500)
+              .attr("r", d => this.sizeScale(d[sizeAttribute]))
+              .attr("fill", d => this.colorScale(d[colorAttribute]));
+  
+          this.updateDots(update, xAttribute, yAttribute);
+      },
+      (exit) => {
+          exit.remove();
+      }
+  );    
 }
+
 
   clear() {
     this.svg.selectAll("*").remove();

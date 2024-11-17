@@ -9,21 +9,27 @@ svg {
     height: 100%;
 }
 
-.brush rect {
+.brush-layer rect {
     fill: none;
     pointer-events: all;
     stroke: #000;
     stroke-width: 1.5px;
 }
 
-.brush .selection {
+.brush-layer .selection {
     fill: none;    /* Light blue fill */
     stroke: rgb(0, 0, 0);  /* Single, solid blue border */
     stroke-width: 2px;             /* Single line border */
 }
 
 /* Style the handles (resize corners) */
-.brush .handle {
+.brush-layer .handle {
     stroke: none;                  /* Remove any stroke from the handles */
     fill: none;    /* Blue color for handles */
+}
+
+.scatterplot-tooltip {
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.2);
 }

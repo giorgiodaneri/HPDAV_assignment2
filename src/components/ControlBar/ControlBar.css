@@ -1,7 +1,7 @@
 .control-bar-form {
     display: flex;
-    gap: 10px; /* Space between dropdowns and button */
-    align-items: center; /* Aligns items (dropdowns and button) vertically in the same row */
+    gap: 10px; 
+    align-items: center; 
 }
 
 .input-group {

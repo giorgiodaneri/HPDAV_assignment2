@@ -1,8 +1,8 @@
 /*Align all the three text boxes on the same row */
 .control-bar-right-form {
     display: flex;
-    align-items: center; /* Vertically align items */
-    gap: 10px; /* Space between elements */
+    align-items: center; 
+    gap: 10px;
     flex-direction: column;
 }
 
