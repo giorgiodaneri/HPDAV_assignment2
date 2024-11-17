@@ -5,20 +5,18 @@ export const configSliceRight = createSlice({
   initialState: {
     firstAxis : "Temperature",
     secondAxis : "RentedBikeCount",
-    third : "Rainfall",
+    color : "Humidity",
     invertX : false,
-    invertY : false,
-    invertZ : false
+    invertY : false
   },
   reducers: {
     generateFromConfigRight: (state, action) => {
       // Update both xAxis and yAxis with the selected values
         state.firstAxis = action.payload.firstAxis;
         state.secondAxis = action.payload.secondAxis;
-        state.thirdAxis = action.payload.thirdAxis;
+        state.color = action.payload.color;
         state.invertX = action.payload.invertX;
         state.invertY = action.payload.invertY;
-        state.invertZ = action.payload.invertZ;
     }
   }
 })

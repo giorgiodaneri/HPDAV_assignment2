@@ -6,10 +6,9 @@ function ParallelCoordinatesContainer() {
     const data = useSelector(state => state.dataSet);
     const firstAxis = useSelector(state => state.configRight.firstAxis);
     const secondAxis = useSelector(state => state.configRight.secondAxis);
-    const thirdAxis = useSelector(state => state.configRight.thirdAxis);
+    const color = useSelector(state => state.configRight.color);
     const invertX = useSelector(state => state.configRight.invertX);
     const invertY = useSelector(state => state.configRight.invertY);
-    const invertZ = useSelector(state => state.configRight.invertZ);
     const brushedData = useSelector(state => state.brushedData); 
     const dispatch = useDispatch();
 
@@ -18,9 +17,6 @@ function ParallelCoordinatesContainer() {
 
     useEffect(() => {
         if (data.length > 0) {
-            // Clear any existing SVG elements in the container
-            // parallelContainerRef.current.innerHTML = '';
-
             // Create a new ParallelCoordinates instance, passing the dispatch function
             parallelCoordinatesRef.current = new ParallelCoordinates(
                 parallelContainerRef.current, 
@@ -28,29 +24,24 @@ function ParallelCoordinatesContainer() {
                 brushedData, 
                 firstAxis, 
                 secondAxis, 
-                thirdAxis,
+                color,
                 invertX,
                 invertY,
-                invertZ,
-                dispatch // Pass the dispatch function
+                dispatch 
             );
         }
-    }, [data, brushedData, firstAxis, secondAxis, thirdAxis, invertX, invertY, invertZ, dispatch]);
+    }, [data, brushedData, firstAxis, secondAxis, color, invertX, invertY, dispatch]);
 
     useEffect(() => {
-        if (firstAxis && secondAxis && thirdAxis) {
+        if (firstAxis && secondAxis && color && invertX && invertY) {
             const parallelCoordinatesD3 = parallelCoordinatesRef.current;
         
-            parallelCoordinatesD3.drawParallelCoordinates(firstAxis, secondAxis, thirdAxis, invertX, invertY, invertZ); 
+            parallelCoordinatesD3.drawParallelCoordinates(firstAxis, secondAxis, color, invertX, invertY); 
         }
-    }, [firstAxis, secondAxis, thirdAxis, invertX, invertY, invertZ, dispatch]);
+    }, [firstAxis, secondAxis, color, invertX, invertY, dispatch]);
 
     return (
-        <div
-            ref={parallelContainerRef}
-            id="parallelCoordinatesContainer"
-            style={{ width: '100%', height: '100%' }}
-        ></div>
+        <div ref={parallelContainerRef} id="parallelCoordinatesContainer" style={{ width: '100%', height: '100%' }} ></div>
     );
 }
 

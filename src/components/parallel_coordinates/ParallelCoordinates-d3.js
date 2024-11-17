@@ -3,18 +3,17 @@ import { setBrushedDataParallelCoords } from '../../redux/BrushedDataSliceSecond
 
 
 class ParallelCoordinates {
-    constructor(container, data, brushedData, firstAxis, secondAxis, thirdAxis, invertX, invertY, invertZ, dispatch) {
+    constructor(container, data, brushedData, firstAxis, secondAxis, color, invertX, invertY, dispatch) {
         this.container = container;
         this.data = data;
         this.brushedData = brushedData || []; // Initialize to an empty array if undefined
         this.firstAxis = firstAxis || "Temperature";
         this.secondAxis = secondAxis || "RentedBikeCount";
-        this.thirdAxis = thirdAxis || "Rainfall";
+        this.color = color || "Humidity";
         this.margin = { top: 30, right: 10, bottom: 25, left: 10 };
         this.dispatch = dispatch;
         this.invertX = invertX || false;
         this.invertY = invertY || false;
-        this.invertZ = invertZ || false;
 
         // Get the width and height from the container's bounding box
         const containerRect = container.getBoundingClientRect();
@@ -24,20 +23,27 @@ class ParallelCoordinates {
         this.drawParallelCoordinates();
     }
 
-    drawParallelCoordinates(firstAxis, secondAxis, thirdAxis, invertX, invertY, invertZ) {
+    drawParallelCoordinates(firstAxis, secondAxis, color, invertX, invertY) {
         // Update the axes based on the selected attributes
-        if (firstAxis && secondAxis && thirdAxis && invertX && invertY && invertZ) {
+        if (firstAxis && secondAxis && color && invertX && invertY) {
             this.firstAxis = firstAxis;
             this.secondAxis = secondAxis;
-            this.thirdAxis = thirdAxis;
+            this.color = color;
             this.invertX = invertX;
             this.invertY = invertY;
-            this.invertZ = invertZ;
         }
 
-        const attributes = [this.firstAxis, this.secondAxis, this.thirdAxis];
+        const attributes = [this.firstAxis, this.secondAxis];
+        // Categorical sorting (lexicographic for Date, Season and binary for Holiday and FunctioningDay)
+        const categoricalOrder = {
+            'Date': (a, b) => d3.ascending(a, b), // Lexicographic sort
+            'Seasons': (a, b) => d3.ascending(a, b),
+            'Holiday': (a, b) => a === "No Holiday" ? -1 : 1, // No Holiday < Yes Holiday
+            'FunctioningDay': (a, b) => a === "No" ? -1 : 1, // No < Yes
+        };
+
         const colorScale = d3.scaleSequential(d3.interpolatePlasma)
-            .domain(d3.extent(this.data, d => d.Humidity));
+            .domain(d3.extent(this.data, d => d[this.color]));
 
         // Create SVG or reuse the existing one
         let svg = d3.select(this.container).selectAll("svg")
@@ -59,15 +65,24 @@ class ParallelCoordinates {
         // Create or update yScales for each attribute
         const yScales = {};
         attributes.forEach(attr => {
-            yScales[attr] = d3.scaleLinear()
-                .domain(d3.extent(this.data, d => d[attr]))
-                .range(
-                    (attr === this.firstAxis && this.invertX) ||
-                    (attr === this.secondAxis && this.invertY) ||
-                    (attr === this.thirdAxis && this.invertZ)
-                        ? [0, this.height] // Inverted range for the axis
-                        : [this.height, 0] // Default range
-                );
+            if (categoricalOrder[attr]) {
+                // For categorical variables, use an ordinal scale
+                const uniqueCategories = Array.from(new Set(this.data.map(d => d[attr])));
+                uniqueCategories.sort(categoricalOrder[attr]);
+                yScales[attr] = d3.scalePoint()
+                    .domain(uniqueCategories)
+                    .range([this.height, 0]);
+            } else {
+                // For continuous variables, use a linear scale
+                yScales[attr] = d3.scaleLinear()
+                    .domain(d3.extent(this.data, d => d[attr]))
+                    .range(
+                        (attr === this.firstAxis && this.invertX) ||
+                        (attr === this.secondAxis && this.invertY) 
+                            ? [0, this.height] // Inverted range for the axis
+                            : [this.height, 0] // Default range
+                    );
+            }
         });
 
         const xScale = d3.scalePoint()
@@ -85,7 +100,7 @@ class ParallelCoordinates {
             .merge(axes)
             .attr("transform", d => `translate(${xScale(d)},0)`)
             .each(function (d) {
-                if (d === this.thirdAxis) {
+                if (d === this.secondAxis) {
                     d3.select(this).call(d3.axisRight(yScales[d])); // Right-aligned axis for third axis
                 } else {
                     d3.select(this).call(d3.axisLeft(yScales[d]));
@@ -129,7 +144,7 @@ class ParallelCoordinates {
             .merge(lines)
             .attr("d", d => lineGenerator(attributes.map(attr => d[attr])))
             .style("fill", "none")
-            .style("stroke", d => colorScale(d.Humidity))
+            .style("stroke", d => colorScale(d[this.color]))
             .style("opacity", d => {
                 return this.isBrushed(d) ? 0.4 : 0.02;
             });
@@ -139,7 +154,7 @@ class ParallelCoordinates {
         // Brushing remains untouched
         let brushSelections = {
             firstAxis: null,
-            thirdAxis: null,
+            secondAxis: null,
         };
 
         // Update the function to handle multiple brushes
@@ -147,14 +162,14 @@ class ParallelCoordinates {
             const selection = event.selection;
             brushSelections[axis] = selection;
 
-            if (brushSelections.firstAxis || brushSelections.thirdAxis) {
+            if (brushSelections.firstAxis || brushSelections.secondAxis) {
                 const brushedData = data.filter(d => {
                     const firstBrushValid = !brushSelections.firstAxis ||
                         (yScale[this.firstAxis](d[this.firstAxis]) >= brushSelections.firstAxis[0] &&
                         yScale[this.firstAxis](d[this.firstAxis]) <= brushSelections.firstAxis[1]);
-                    const thirdBrushValid = !brushSelections.thirdAxis ||
-                        (yScale[this.thirdAxis](d[this.thirdAxis]) >= brushSelections.thirdAxis[0] &&
-                        yScale[this.thirdAxis](d[this.thirdAxis]) <= brushSelections.thirdAxis[1]);
+                    const thirdBrushValid = !brushSelections.secondAxis ||
+                        (yScale[this.secondAxis](d[this.secondAxis]) >= brushSelections.secondAxis[0] &&
+                        yScale[this.secondAxis](d[this.secondAxis]) <= brushSelections.secondAxis[1]);
 
                     return firstBrushValid && thirdBrushValid;
                 });
@@ -179,9 +194,9 @@ class ParallelCoordinates {
             .extent([[xScale(this.firstAxis) - 5, 0], [xScale(this.firstAxis) + 5, this.height]])
             .on("start brush end", (event) => handleBrush("firstAxis", event, yScales, this.data));
 
-        const brushThirdAxis = d3.brushY()
-            .extent([[xScale(this.thirdAxis) - 5, 0], [xScale(this.thirdAxis) + 5, this.height]])
-            .on("start brush end", (event) => handleBrush("thirdAxis", event, yScales, this.data));
+        const brushsecondAxis = d3.brushY()
+            .extent([[xScale(this.secondAxis) - 5, 0], [xScale(this.secondAxis) + 5, this.height]])
+            .on("start brush end", (event) => handleBrush("secondAxis", event, yScales, this.data));
 
         // Append brushes to the respective axes
         mainGroup.selectAll(".brush").remove();
@@ -192,7 +207,7 @@ class ParallelCoordinates {
 
         mainGroup.append("g")
             .attr("class", "brush")
-            .call(brushThirdAxis);
+            .call(brushsecondAxis);
     }
       
     // Generate a unique identifier for each data point

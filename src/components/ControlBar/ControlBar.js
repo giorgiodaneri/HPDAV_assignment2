@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { generateFromConfig } from "../../redux/ConfigSlice";
 import "./ControlBar.css";
-import { color } from "d3";
 
 function ControlBar() {
     const dispatch = useDispatch();

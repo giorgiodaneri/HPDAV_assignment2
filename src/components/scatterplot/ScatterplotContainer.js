@@ -4,11 +4,12 @@ import ScatterplotD3 from './Scatterplot-d3';
 import { useSelector, useDispatch } from 'react-redux';
 import { setBrushedData } from '../../redux/BrushedDataSlice';
 
-function ScatterplotContainer({ setHoveredData }) {
+function ScatterplotContainer() {
     const data = useSelector((state) => state.dataSet);
     const xAxis = useSelector((state) => state.config.xAxis);
     const yAxis = useSelector((state) => state.config.yAxis);
     const color = useSelector((state) => state.config.color);
+    const size = "Visibility";
     const brushedDataParallelCoords = useSelector((state) => state.brushedDataParallelCoords);
     const dispatch = useDispatch();
 
@@ -29,21 +30,17 @@ function ScatterplotContainer({ setHoveredData }) {
     }, []);
 
     useEffect(() => {
-        if (data && data.length > 0 && xAxis && yAxis && color && brushedDataParallelCoords) {
+        if (data && data.length > 0 && xAxis && yAxis && color && size && brushedDataParallelCoords) {
             const scatterplotD3 = scatterplotD3Ref.current;
 
             const handleOnBrush = (selectedData) => {
                 dispatch(setBrushedData(selectedData));
             };
             
-            scatterplotD3.renderScatterplot(data, xAxis, yAxis, color, "Visibility", brushedDataParallelCoords, {
-                handleOnClick: (cellData) => console.log('Clicked:', cellData),
-                handleOnMouseEnter: (cellData) => setHoveredData(cellData),
-                handleOnMouseLeave: () => setHoveredData(null),
-                handleOnBrush,
-            });
+            scatterplotD3.renderScatterplot(data, xAxis, yAxis, color, size, 
+                brushedDataParallelCoords, {handleOnBrush});
         }
-    }, [data, xAxis, yAxis, color, brushedDataParallelCoords, dispatch, setHoveredData]);
+    }, [data, xAxis, yAxis, color, size, brushedDataParallelCoords, dispatch]);
 
     return <div ref={divContainerRef} className="scatterplotDivContainer" style={{ width: '100%', height: '100%' }}></div>;
 }

@@ -61,7 +61,6 @@ class ScatterplotD3 {
         // If the data point is in the brushedData, set opacity to 0.4, else 0.02
         return this.isBrushed(d) ? 0.8 : 0.3;
     });
-    // this.changeBorderAndOpacity(selection);
   }
 
   highlightSelectedItems(selectedItems) {
@@ -296,7 +295,7 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
             })
             .select("circle")
             .transition()
-            .duration(500)
+            .duration(this.transitionDuration)
             .attr("r", d => this.sizeScale(d[sizeAttribute]))
             .attr("fill", d => this.colorScale(d[colorAttribute]));
 

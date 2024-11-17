@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { generateFromConfigRight } from "../../redux/ConfigSliceRight";
 import "./ControlBarRight.css"; // Import the CSS file
+import { color } from "d3";
 
 function ControlBarRight() {
     const dispatch = useDispatch();
 
     // Fetch the current configuration from the Redux store
-    const genConfig = useSelector((state) => state.configRight || { firstAxis: 'Temperature', secondAxis: 'RentedBikeCount', third: 'Rainfall' });
+    const genConfig = useSelector((state) => state.configRight || { firstAxis: 'Temperature', secondAxis: 'RentedBikeCount', color: 'Humidity' });
 
     // Fetch column names from the data slice
     const data = useSelector((state) => state.dataSet);
@@ -16,12 +17,11 @@ function ControlBarRight() {
     // Local state for x and y axis selection
     const [selectedFirstAxis, setSelectedFirstAxis] = useState(genConfig.firstAxis || '');
     const [selectedSecondAxis, setSelectedSecondAxis] = useState(genConfig.secondAxis || '');
-    const [selectedThirdAxis, setSelectedThirdAxis] = useState(genConfig.third || '');
+    const [selectedColor, setSelectedColor] = useState(genConfig.color || '');
 
     // Local state for invert checkboxes
     const [invertX, setInvertX] = useState(false);
     const [invertY, setInvertY] = useState(false);
-    const [invertZ, setInvertZ] = useState(false);   
 
     // Extract column names when data is loaded
     useEffect(() => {
@@ -40,14 +40,13 @@ function ControlBarRight() {
         setSelectedSecondAxis(event.target.value);
     };
 
-    const handleOnChangeThirdAxis = (event) => {
-        setSelectedThirdAxis(event.target.value);
+    const handleOnChangeColor = (event) => {
+        setSelectedColor(event.target.value);
     };
 
     // Handlers for invert checkboxes
     const handleInvertXChange = () => setInvertX(!invertX);
     const handleInvertYChange = () => setInvertY(!invertY);
-    const handleInvertZChange = () => setInvertZ(!invertZ);
 
     // Dispatch selected x and y axes to the Redux store only on form submit
     const handleOnSubmit = (event) => {
@@ -57,10 +56,9 @@ function ControlBarRight() {
         dispatch(generateFromConfigRight({
             firstAxis: selectedFirstAxis,
             secondAxis: selectedSecondAxis,
-            thirdAxis: selectedThirdAxis, 
+            color: selectedColor,
             invertX: invertX,
-            invertY: invertY,
-            invertZ: invertZ}));
+            invertY: invertY}));
     };
 
     return (
@@ -91,7 +89,7 @@ function ControlBarRight() {
 
                     <label className="form-label">
                         Third axis
-                        <select name="thirdAxis" value={selectedThirdAxis} onChange={handleOnChangeThirdAxis}>
+                        <select name="Color" value={selectedColor} onChange={handleOnChangeColor}>
                             {columnNames.map((name) => (
                                 <option key={name} value={name}>
                                     {name}
@@ -108,9 +106,6 @@ function ControlBarRight() {
                     </label>
                     <label className="invert-checkbox">
                         <input type="checkbox" checked={invertY} onChange={handleInvertYChange} /> Y
-                    </label>
-                    <label className="invert-checkbox">
-                        <input type="checkbox" checked={invertZ} onChange={handleInvertZChange} /> Z
                     </label>
                     <button type="submit" className="generate-button">Generate</button>
                 </div>
