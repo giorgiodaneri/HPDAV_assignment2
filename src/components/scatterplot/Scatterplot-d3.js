@@ -154,11 +154,18 @@ isBrushed(d) {
   return false; // If no match is found, return false
 }
 
+clearBrush() {
+  this.svg.select(".brush").call(d3.brush().move, null); // Clear the brush programmatically
+  this.svg.selectAll(".dotG").style("opacity", this.defaultOpacity); // Reset dot opacity
+}
+
 
 renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, brushedDataParallelCoords, controllerMethods) {
   // if brushedDataParallelCoords is not empty, then update the opacity of the dots
   if (brushedDataParallelCoords) {
       this.brushedDataParallelCoords = brushedDataParallelCoords;
+      // Clear the scatter plot brush if external brushing occurs
+      this.clearBrush();
   }
 
   this.updateAxis(data, xAttribute, yAttribute);
@@ -174,7 +181,6 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
       .extent([[0, 0], [this.size.width, this.size.height]]) // Define the extent of the brush
       .on("start brush end", (event) => {
           const selection = event.selection;
-    
           if (selection) {
               const [[x0, y0], [x1, y1]] = selection;
 
@@ -211,9 +217,10 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
           }
       });
     
-    // Customize the brush appearance
-    this.svg.select("g").selectAll(".brush")
-    .call(brush);
+    // Apply the brush to the scatterplot (styling is done in the CSS file, fine-grained control)
+    this.svg.append("g").attr("class", "brush").call(brush);
+      // this.svg.select("g").selectAll(".brush")
+      // .call(brush);  
 
   this.svg.select("g").selectAll(".dotG")
       .data(data, (itemData) => itemData.index)
@@ -241,10 +248,7 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
               exit.remove();
           }
       );
-
-  this.svg.append("g").attr("class", "brush").call(brush);
 }
-
 
   clear() {
     this.svg.selectAll("*").remove();

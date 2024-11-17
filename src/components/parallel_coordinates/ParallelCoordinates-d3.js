@@ -100,7 +100,8 @@ class ParallelCoordinates {
         const brush = d3.brushY()
             .extent([[xScale(this.firstAxis) - 5, 0], [xScale(this.firstAxis) + 5, this.height]])
             .on("start brush end", (event) => {
-                if (event.selection) {
+                const selection = event.selection;
+                if (selection) {
                     const [y0, y1] = event.selection;
                     const brushedData = this.data.filter(d => {
                         const value = yScales[this.firstAxis](d[this.firstAxis]);
@@ -112,14 +113,18 @@ class ParallelCoordinates {
                             return brushedData.includes(d) ? 0.4 : 0.02;
                         });
     
-                    // call reducer to store brushed data
                     // Dispatch the brushed data to the Redux store
-                    this.dispatch(setBrushedDataParallelCoords(brushedData));
+                    if(event.type === "end") {
+                        this.dispatch(setBrushedDataParallelCoords(brushedData));
+                    }
                 } else {
                     // Reset if brush is cleared
                     svg.selectAll(".line").style("opacity", 0.02);
                     // call reducer to store empty brushed data
-                    this.dispatch(setBrushedDataParallelCoords([]));
+                    if(event.type === "end")
+                    {
+                        this.dispatch(setBrushedDataParallelCoords([]));
+                    }
                 }
             });
     
