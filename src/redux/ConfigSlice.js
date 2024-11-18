@@ -5,7 +5,8 @@ export const configSlice = createSlice({
   initialState: {
     xAxis : "Temperature",
     yAxis : "RentedBikeCount",
-    color : "WindSpeed"
+    color : "WindSpeed",
+    size : "Humidity"
   },
   reducers: {
     generateFromConfig: (state, action) => {
@@ -14,6 +15,7 @@ export const configSlice = createSlice({
       state.xAxis = action.payload.xAxis;
       state.yAxis = action.payload.yAxis;
       state.color = action.payload.color;
+      state.size = action.payload.size;
     }
   }
 })

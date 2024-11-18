@@ -7,16 +7,17 @@ function ControlBar() {
     const dispatch = useDispatch();
 
     // Fetch the current configuration from the Redux store
-    const genConfig = useSelector((state) => state.config || { xAxis: '', yAxis: '', color: '' });
+    const genConfig = useSelector((state) => state.config || { xAxis: '', yAxis: '', color: '', size: '' });
 
     // Fetch column names from the data slice
     const data = useSelector((state) => state.dataSet);
     const [columnNames, setColumnNames] = useState([]);
 
-    // Local state for x and y axis selection
+    // Local state for selections
     const [selectedXAxis, setSelectedXAxis] = useState(genConfig.xAxis || '');
     const [selectedYAxis, setSelectedYAxis] = useState(genConfig.yAxis || '');
-    const [selectedColor , setSelectedColor] = useState(genConfig.color || '');
+    const [selectedColor, setSelectedColor] = useState(genConfig.color || '');
+    const [selectedSize, setSelectedSize] = useState(genConfig.size || '');
 
     // Extract column names when data is loaded
     useEffect(() => {
@@ -39,21 +40,26 @@ function ControlBar() {
         setSelectedColor(event.target.value);  
     };
 
-    // Dispatch selected x and y axes to the Redux store only on form submit
+    const handleOnChangeSize = (event) => {
+        setSelectedSize(event.target.value);
+    };
+
+    // Dispatch selected axes and other settings to the Redux store on form submit
     const handleOnSubmit = (event) => {
         event.preventDefault();
         
-        // Dispatch selected axes to Redux
+        // Dispatch selected configuration to Redux
         dispatch(generateFromConfig({
             xAxis: selectedXAxis,
             yAxis: selectedYAxis,
-            color: selectedColor
+            color: selectedColor,
+            size: selectedSize
         }));
     };
 
     return (
-        <>
-            <form className="control-bar-form" onSubmit={handleOnSubmit}>
+        <form className="control-bar-form" onSubmit={handleOnSubmit}>
+            <div className="input-group-row">
                 <div className="input-group">
                     <label htmlFor="xAxis">X-axis</label>
                     <select
@@ -85,7 +91,9 @@ function ControlBar() {
                         ))}
                     </select>
                 </div>
+            </div>
 
+            <div className="input-group-row">
                 <div className="input-group">
                     <label htmlFor="color">Color</label>
                     <select
@@ -102,11 +110,27 @@ function ControlBar() {
                     </select>
                 </div>
 
-                <div className="button-container">
-                    <button type="submit" className="generate-button">Generate</button>
+                <div className="input-group">
+                    <label htmlFor="size">Size</label>
+                    <select
+                        id="size"
+                        name="size"
+                        value={selectedSize}
+                        onChange={handleOnChangeSize}
+                    >
+                        {columnNames.map((name) => (
+                            <option key={name} value={name}>
+                                {name}
+                            </option>
+                        ))}
+                    </select>
                 </div>
-            </form>
-        </>
+            </div>
+
+            <div className="button-container">
+                <button type="submit" className="generate-button">Generate</button>
+            </div>
+        </form>
     );
 }
 

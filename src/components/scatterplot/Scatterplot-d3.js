@@ -243,9 +243,23 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
             .domain(d3.extent(data, (d) => d[colorAttribute]));
     }
 
-    this.sizeScale = d3.scaleLinear()
-        .domain(d3.extent(data, (d) => d[sizeAttribute]))
-        .range([1, 6]);
+    // this.sizeScale = d3.scaleLinear()
+    //     .domain(d3.extent(data, (d) => d[sizeAttribute]))
+    //     .range([1, 7]);
+    
+    // do the same for the size scale
+    if(this.isCategorical(sizeAttribute)){
+        const orderedSizeValues = Array.from(new Set(data.map(d => d[sizeAttribute])))
+            .sort();  // Sort the categorical values as needed
+
+        this.sizeScale = d3.scaleOrdinal()
+            .domain(orderedSizeValues)
+            .range([1, 7]);  // Use a color scale (like d3.schemeCategory10)
+    } else {
+        this.sizeScale = d3.scaleLinear()
+            .domain(d3.extent(data, (d) => d[sizeAttribute]))
+            .range([1, 7]);
+    }
 
     // Clear previous brush and create a new brush layer
     this.svg.select(".brush-layer").remove();
@@ -310,7 +324,8 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
                         .html(
                             `<strong>${xAttribute}:</strong> ${itemData[xAttribute]}<br>
                             <strong>${yAttribute}:</strong> ${itemData[yAttribute]}<br>
-                            <strong>${colorAttribute}:</strong> ${itemData[colorAttribute]}<br>`
+                            <strong>${colorAttribute}:</strong> ${itemData[colorAttribute]}<br>
+                            <strong>${sizeAttribute}:</strong> ${itemData[sizeAttribute]}`
                         );
                 })
                 .on("mousemove", (event) => {

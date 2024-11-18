@@ -9,7 +9,7 @@ function ScatterplotContainer() {
     const xAxis = useSelector((state) => state.config.xAxis);
     const yAxis = useSelector((state) => state.config.yAxis);
     const color = useSelector((state) => state.config.color);
-    const size = "Visibility";
+    const size = useSelector((state) => state.config.size);
     const brushedDataParallelCoords = useSelector((state) => state.brushedDataParallelCoords);
     const dispatch = useDispatch();
 
