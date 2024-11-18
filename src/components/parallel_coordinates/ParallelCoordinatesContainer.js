@@ -12,12 +12,13 @@ function ParallelCoordinatesContainer() {
     const brushedData = useSelector(state => state.brushedData); 
     const dispatch = useDispatch();
 
-    const parallelContainerRef = useRef(null); // Ref for the container
-    const parallelCoordinatesRef = useRef(null); // Ref for the ParallelCoordinates instance
+    // Get a reference to the container div and the ParallelCoordinates instance
+    const parallelContainerRef = useRef(null); 
+    const parallelCoordinatesRef = useRef(null);
 
     useEffect(() => {
         if (data.length > 0) {
-            // Create a new ParallelCoordinates instance, passing the dispatch function
+            // Create a new ParallelCoordinates instance
             parallelCoordinatesRef.current = new ParallelCoordinates(
                 parallelContainerRef.current, 
                 data, 
@@ -34,8 +35,8 @@ function ParallelCoordinatesContainer() {
 
     useEffect(() => {
         if (firstAxis && secondAxis && color && invertX && invertY) {
+            // Draw the updated chart
             const parallelCoordinatesD3 = parallelCoordinatesRef.current;
-        
             parallelCoordinatesD3.drawParallelCoordinates(firstAxis, secondAxis, color, invertX, invertY); 
         }
     }, [firstAxis, secondAxis, color, invertX, invertY, dispatch]);

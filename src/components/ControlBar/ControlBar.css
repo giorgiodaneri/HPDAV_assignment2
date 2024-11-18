@@ -1,7 +1,21 @@
 .control-bar-form {
     display: flex;
     gap: 10px; 
-    align-items: center; 
+    align-items: center;    
+}
+
+.first-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: center;
+}
+
+.second-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
 }
 
 .input-group {

@@ -11,7 +11,6 @@ export const configSliceRight = createSlice({
   },
   reducers: {
     generateFromConfigRight: (state, action) => {
-      // Update both xAxis and yAxis with the selected values
         state.firstAxis = action.payload.firstAxis;
         state.secondAxis = action.payload.secondAxis;
         state.color = action.payload.color;
@@ -21,7 +20,6 @@ export const configSliceRight = createSlice({
   }
 })
 
-// Action creators are generated for each case reducer function
 export const { generateFromConfigRight } = configSliceRight.actions
 
 export default configSliceRight.reducer

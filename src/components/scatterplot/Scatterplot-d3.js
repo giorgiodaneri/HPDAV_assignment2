@@ -22,6 +22,7 @@ class ScatterplotD3 {
     this.brushedDataParallelCoords = [];
   }
 
+  // Function to create the scatterplot, the svg element and the axes
   create({ size }) {
     this.size = size;
     this.width = this.size.width - this.margin.left - this.margin.right;
@@ -47,12 +48,7 @@ class ScatterplotD3 {
       .attr("class", "yAxisG");
   }
 
-  changeBorderAndOpacity(selection) {
-    selection.style("opacity", (item) => item.selected ? 1 : this.defaultOpacity)
-      .select(".dotCircle")
-      .attr("stroke-width", (item) => item.selected ? 2 : 0);
-  }
-
+  // Function to update the position of the dots and their opacity
   updateDots(selection, xAttribute, yAttribute) {
     selection
         .transition().duration(this.transitionDuration)
@@ -68,22 +64,25 @@ class ScatterplotD3 {
         });
 }
 
-// Helper function to determine if the attribute is categorical
+// Function to determine if the attribute is categorical
 isCategorical(attribute) {
     return ['Date', 'Seasons', 'Holiday', 'FunctioningDay'].includes(attribute);
 }
 
 updateAxis(visData, xAttribute, yAttribute) {
-    const self = this;  // Capture the correct `this` context
-    
+    // Save a reference to the current context
+    const self = this; 
+    // Define the order of categorical attributes as done in the parallel coordinates plot
+    // Date and Seasons are ordered with lexicographic order
     const categoricalOrder = {
         'Date': (a, b) => d3.ascending(a, b),
         'Seasons': (a, b) => d3.ascending(a, b),
-        'Holiday': (a, b) => a === "No Holiday" ? -1 : 1,
-        'FunctioningDay': (a, b) => a === "No" ? -1 : 1,
+        'Holiday': (a, b) => a === "No Holiday" ? -1 : 1, // No Holiday < Holiday
+        'FunctioningDay': (a, b) => a === "No" ? -1 : 1,  // No < Yes
     };
 
     // Function to limit tick values to 10 equally spaced categories
+    // Avoid cluttering the axis with too many ticks in the case "Date" has been selected 
     const limitTicks = (values, tickCount = 8) => {
         const tickInterval = Math.max(1, Math.floor(values.length / tickCount));
         return values.filter((_, i) => i % tickInterval === 0);
@@ -94,62 +93,46 @@ updateAxis(visData, xAttribute, yAttribute) {
         // Create an ordered set of x-values based on the specified order
         const orderedXValues = Array.from(new Set(visData.map(d => d[xAttribute])))
             .sort(categoricalOrder[xAttribute]);
-
-        // Limit to 10 equally spaced ticks
         const sampledXCategories = limitTicks(orderedXValues);
-
         // Apply d3.scaleBand() for categorical data
         self.x = d3.scaleBand()
-            .domain(orderedXValues)  // domain directly from data values
+            .domain(orderedXValues) 
             .range([0, self.width]);
-
-        // Update x-axis with the correct scale and limited ticks
+        // Update x-axis accordingly
         self.svg.select(".xAxisG")
             .transition().duration(self.transitionDuration)
             .call(d3.axisBottom(self.x).tickValues(sampledXCategories));
     } else {
-        // Use d3.scaleLinear() for continuous data
         self.x = d3.scaleLinear()
             .domain([d3.min(visData, (item) => item[xAttribute]), d3.max(visData, (item) => item[xAttribute])])
             .range([0, self.width]);
-
-        // Update x-axis with correct scale
         self.svg.select(".xAxisG")
             .transition().duration(self.transitionDuration)
             .call(d3.axisBottom(self.x));
     }
 
-    // Update y-axis scale
+    // Update y-axis scale in a similar way
     if (self.isCategorical(yAttribute)) {
         // Create an ordered set of y-values based on the specified order
         const orderedYValues = Array.from(new Set(visData.map(d => d[yAttribute])))
             .sort(categoricalOrder[yAttribute]);
-
-        // Limit to 10 equally spaced ticks
         const sampledYCategories = limitTicks(orderedYValues);
-
-        // Apply d3.scaleBand() for categorical data
         self.y = d3.scaleBand()
-            .domain(orderedYValues)  // domain directly from data values
+            .domain(orderedYValues) 
             .range([self.height, 0]);
-
-        // Update y-axis with the correct scale and limited ticks
         self.svg.select(".yAxisG")
             .transition().duration(self.transitionDuration)
             .call(d3.axisLeft(self.y).tickValues(sampledYCategories));
     } else {
-        // Use d3.scaleLinear() for continuous data
         self.y = d3.scaleLinear()
             .domain([d3.min(visData, (item) => item[yAttribute]), d3.max(visData, (item) => item[yAttribute])])
             .range([self.height, 0]);
-
-        // Update y-axis with correct scale
         self.svg.select(".yAxisG")
             .transition().duration(self.transitionDuration)
             .call(d3.axisLeft(self.y));
     }
 
-    // Add axis labels (ensure only one is present)
+    // Add axis labels. Ensure that the previous labels are removed before adding new ones
     self.svg.select(".xAxisG").selectAll(".axis-label").remove();
     self.svg.select(".yAxisG").selectAll(".axis-label").remove();
 
@@ -178,23 +161,22 @@ updateAxis(visData, xAttribute, yAttribute) {
 }
 
     
-// Check if a data point is inside the brushed data by iterating over brushedData explicitly
+// Function to check if a data point is inside the brushed data
 isBrushed(d) {
     // Ensure brushedData is defined and contains elements before checking
     if (!this.brushedDataParallelCoords || this.brushedDataParallelCoords.length === 0) {
-        return false; // No brushed data, all points will be shown with default opacity
+        return false; 
     }
     // Get unique identifier for the current data point
     const identifier = d.index;
-    // Iterate over the brushedData and compare the uniqueIds
     for (let i = 0; i < this.brushedDataParallelCoords.brushedDataParallelCoords.length; i++) {
         const brushed = this.brushedDataParallelCoords.brushedDataParallelCoords[i];
         if (brushed.index === identifier) {
-            return true; // If a match is found, return true
+            return true; 
         }
   }
 
-  return false; // If no match is found, return false
+  return false;
 }
 
 clearBrush() {
@@ -204,6 +186,7 @@ clearBrush() {
 
 renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, brushedDataParallelCoords, controllerMethods) {
     // Create a tooltip element if it doesn't already exist
+    // It will be used to display information about the data points when the cursor hovers over them
     const tooltip = d3.select(this.container)
         .select(".scatterplot-tooltip");
     if (tooltip.empty()) {
@@ -218,43 +201,36 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
             .style("pointer-events", "none")
             .style("opacity", 0);
     }
-
     const tooltipDiv = d3.select(".scatterplot-tooltip");
 
     // If brushedDataParallelCoords is not empty, update opacity of dots
     if (brushedDataParallelCoords) {
         this.brushedDataParallelCoords = brushedDataParallelCoords;
-        // Clear the scatter plot brush if external brushing occurs
+        // Clear the scatter plot brush if external brushing occurs from the other plot
         this.clearBrush();
     }
 
     this.updateAxis(data, xAttribute, yAttribute);
 
-    // Handle color scale: check if colorAttribute is categorical or continuous
+    // Handle color scale: check if colorAttribute is categorical
     if (this.isCategorical(colorAttribute)) {
         const orderedColorValues = Array.from(new Set(data.map(d => d[colorAttribute])))
-            .sort();  // Sort the categorical values as needed
-
+            .sort();  
         this.colorScale = d3.scaleOrdinal()
             .domain(orderedColorValues)
-            .range(d3.schemeCategory10);  // Use a color scale (like d3.schemeCategory10)
+            .range(d3.schemeCategory10);
     } else {
         this.colorScale = d3.scaleSequential(d3.interpolateTurbo)
             .domain(d3.extent(data, (d) => d[colorAttribute]));
     }
-
-    // this.sizeScale = d3.scaleLinear()
-    //     .domain(d3.extent(data, (d) => d[sizeAttribute]))
-    //     .range([1, 7]);
-    
     // do the same for the size scale
     if(this.isCategorical(sizeAttribute)){
         const orderedSizeValues = Array.from(new Set(data.map(d => d[sizeAttribute])))
-            .sort();  // Sort the categorical values as needed
+            .sort();  
 
         this.sizeScale = d3.scaleOrdinal()
             .domain(orderedSizeValues)
-            .range([1, 7]);  // Use a color scale (like d3.schemeCategory10)
+            .range([1, 7]);
     } else {
         this.sizeScale = d3.scaleLinear()
             .domain(d3.extent(data, (d) => d[sizeAttribute]))
@@ -272,8 +248,9 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
         .on("start brush end", (event) => {
             const selection = event.selection;
             if (selection) {
+                // Get currently selected area
                 const [[x0, y0], [x1, y1]] = selection;
-
+                // Get corresponding selected data points
                 const selectedData = data.filter(d => {
                     const cx = this.x(d[xAttribute]);
                     const cy = this.y(d[yAttribute]);
@@ -286,11 +263,13 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
                         const cy = this.y(d[yAttribute]);
                         return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1 ? 0.8 : 0.3;
                     });
-
+                // Dispatch the selected data to the controller, which will update the store
+                // And therefore also the other plot
                 if (event.type === "end") {
                     controllerMethods.handleOnBrush(selectedData);
                 }
             } else {
+                // If no selection, reset opacity and dispatch empty array to the controller
                 this.svg.selectAll(".dotG")
                     .style("opacity", 0.3);
 
@@ -299,11 +278,10 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
                 }
             }
         });
-
-    // Apply the brush to the brush layer
+    // Apply the brush to the its layer
     brushLayer.call(brush);
 
-    // remove previous dots layer and create a new one
+    // Remove previous dots layer and create a new one
     this.svg.select(".dots-layer").remove();
     const dotsLayer = this.svg.append("g")
             .attr("class", "dots-layer")
@@ -312,12 +290,13 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
     // Render dots
     const dots = this.svg.select(".dots-layer").selectAll(".dotG")
         .data(data, (itemData) => itemData.index);
-
     dots.join(
         (enter) => {
             const itemG = enter.append("g")
                 .attr("class", "dotG")
                 .style("opacity", this.defaultOpacity)
+                // Handle mouse hover events and display the tooltip
+                // Which shows the values of the selected attributes
                 .on("mouseenter", (event, itemData) => {
                     tooltipDiv
                         .style("opacity", 1)

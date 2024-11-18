@@ -9,17 +9,17 @@ function ControlBar() {
     // Fetch the current configuration from the Redux store
     const genConfig = useSelector((state) => state.config || { xAxis: '', yAxis: '', color: '', size: '' });
 
-    // Fetch column names from the data slice
+    // Fetch column names from the data slice in order to display them in the dropdown menus
     const data = useSelector((state) => state.dataSet);
     const [columnNames, setColumnNames] = useState([]);
 
-    // Local state for selections
+    // Local state for user selections
     const [selectedXAxis, setSelectedXAxis] = useState(genConfig.xAxis || '');
     const [selectedYAxis, setSelectedYAxis] = useState(genConfig.yAxis || '');
     const [selectedColor, setSelectedColor] = useState(genConfig.color || '');
     const [selectedSize, setSelectedSize] = useState(genConfig.size || '');
 
-    // Extract column names when data is loaded
+    // Extract column names when data is loaded so that they are properly displayed 
     useEffect(() => {
         if (data.length > 0) {
             const columns = Object.keys(data[0]);
@@ -44,11 +44,9 @@ function ControlBar() {
         setSelectedSize(event.target.value);
     };
 
-    // Dispatch selected axes and other settings to the Redux store on form submit
+    // Dispatch all the settings to the Redux store when the user clicks on the button
     const handleOnSubmit = (event) => {
         event.preventDefault();
-        
-        // Dispatch selected configuration to Redux
         dispatch(generateFromConfig({
             xAxis: selectedXAxis,
             yAxis: selectedYAxis,

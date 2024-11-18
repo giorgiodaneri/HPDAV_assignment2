@@ -1,6 +1,6 @@
 .scatterplotDivContainer {
     width: 100%;
-    height: 100%; /* Or any size that fits your layout */
+    height: 100%; 
     position: relative;
 }
 
@@ -17,15 +17,14 @@ svg {
 }
 
 .brush-layer .selection {
-    fill: none;    /* Light blue fill */
-    stroke: rgb(0, 0, 0);  /* Single, solid blue border */
-    stroke-width: 2px;             /* Single line border */
+    fill: none; 
+    stroke: rgb(0, 0, 0);  
+    stroke-width: 2px;          
 }
 
-/* Style the handles (resize corners) */
 .brush-layer .handle {
-    stroke: none;                  /* Remove any stroke from the handles */
-    fill: none;    /* Blue color for handles */
+    stroke: none;                  
+    fill: none;  
 }
 
 .scatterplot-tooltip {

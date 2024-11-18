@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { generateFromConfigRight } from "../../redux/ConfigSliceRight";
-import "./ControlBarRight.css"; // Import the CSS file
-import { color } from "d3";
+import "./ControlBarRight.css";
 
 function ControlBarRight() {
     const dispatch = useDispatch();
@@ -10,20 +9,20 @@ function ControlBarRight() {
     // Fetch the current configuration from the Redux store
     const genConfig = useSelector((state) => state.configRight || { firstAxis: 'Temperature', secondAxis: 'RentedBikeCount', color: 'Humidity' });
 
-    // Fetch column names from the data slice
+    // Fetch column names from the data slice in order to display them in the dropdown menus
     const data = useSelector((state) => state.dataSet);
     const [columnNames, setColumnNames] = useState([]);
 
-    // Local state for x and y axis selection
+    // Local state for user selections
     const [selectedFirstAxis, setSelectedFirstAxis] = useState(genConfig.firstAxis || '');
     const [selectedSecondAxis, setSelectedSecondAxis] = useState(genConfig.secondAxis || '');
     const [selectedColor, setSelectedColor] = useState(genConfig.color || '');
 
-    // Local state for invert checkboxes
+    // Local state for checkboxes useful to invert axes to better visualize the data patterns
     const [invertX, setInvertX] = useState(false);
     const [invertY, setInvertY] = useState(false);
 
-    // Extract column names when data is loaded
+    // Extract column names when data is loaded so that they are properly displayed 
     useEffect(() => {
         if (data.length > 0) {
             const columns = Object.keys(data[0]);
@@ -48,11 +47,9 @@ function ControlBarRight() {
     const handleInvertXChange = () => setInvertX(!invertX);
     const handleInvertYChange = () => setInvertY(!invertY);
 
-    // Dispatch selected x and y axes to the Redux store only on form submit
+    // Dispatch selected x and y axes to the Redux store when the user clicks on the button
     const handleOnSubmit = (event) => {
         event.preventDefault();
-        
-        // Dispatch selected axes to Redux
         dispatch(generateFromConfigRight({
             firstAxis: selectedFirstAxis,
             secondAxis: selectedSecondAxis,

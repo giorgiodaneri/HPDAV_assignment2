@@ -10,42 +10,14 @@ import ControlBarRight from './components/ControlBarRight/ControlBarRight';
 // Component that renders the main user interface
 function App() {
   const dispatch = useDispatch();
-  // const [hoveredData, setHoveredData] = useState(null);  // Store hovered data
-  // const [brushedData, setBrushedData] = useState([]);    // Store data from brushed area
-  // const [brushedDataParallelCoords, setBrushedDataParallelCoords] = useState([]);    // Store data from brushed area
-
+  // Fetch Seoul Bike Data from the API
   useEffect(() => {
     dispatch(getSeoulBikeData());
   }, [dispatch]);
 
-  // const handleOnBrush = (selectedData) => {
-  //   // Add unique ids to each object in the brushed data
-  //   const brushedDataWithId = selectedData.map((d, index) => ({
-  //     ...d,
-  //     id: index  // Unique ID using index
-  //   }));
-    
-  //   setBrushedData(brushedDataWithId);
-  //   // console.log("Brushed Data:", brushedDataWithId);
-  // };
-
-  // const handleOnBrushParallelCoords = (selectedData) => {
-  //   // Add unique ids to each object in the brushed data
-  //   const brushedDataWithId = selectedData.map((d, index) => ({
-  //     ...d,
-  //     id: index  // Unique ID using index
-  //   }));
-    
-  //   setBrushedDataParallelCoords(brushedDataWithId);
-  //   console.log("Brushed Data Parallel coords:", brushedDataWithId);
-  // };
-
   return (
     <div className="App">
       <div id="view-container" className="row">
-        {/* <div id="control-bar-container">
-          <ControlBar />
-        </div> */}
         <div id="control-container" className="controlRow">
           {/* ControlBar on the left */}
           <div id="control-bar-container" className="controlBar">

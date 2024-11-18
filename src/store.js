@@ -1,12 +1,9 @@
-// store.js
 import { configureStore } from '@reduxjs/toolkit';
-import configReducer from './redux/ConfigSlice'; // Update the path based on your folder structure
-import dataSetReducer from './redux/DataSetSlice'; // Update the path based on your folder structure
-import brushDataReducer from './redux/BrushedDataSlice'; // Update the path based on your folder structure
-import configReducerRight from './redux/ConfigSliceRight'; // Update the path based on your folder structure
-import brushDataReducerSecond from './redux/BrushedDataSliceSecond'; // Update the path based on your folder structure
-
-import { brush } from 'd3';
+import configReducer from './redux/ConfigSlice'; 
+import dataSetReducer from './redux/DataSetSlice'; 
+import brushDataReducer from './redux/BrushedDataSlice'; 
+import configReducerRight from './redux/ConfigSliceRight'; 
+import brushDataReducerSecond from './redux/BrushedDataSliceSecond'; 
 
 const store = configureStore({
     reducer: {
