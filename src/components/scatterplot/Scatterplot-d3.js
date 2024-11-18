@@ -253,13 +253,6 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
         .attr("class", "brush-layer")
         .attr("transform", `translate(${this.margin.left},${this.margin.top})`);
 
-    const dotsLayer = this.svg.select(".dots-layer");
-    if (dotsLayer.empty()) {
-        this.svg.append("g")
-            .attr("class", "dots-layer")
-            .attr("transform", `translate(${this.margin.left},${this.margin.top})`);
-    }
-
     const brush = d3.brush()
         .extent([[0, 0], [this.width, this.height]])
         .on("start brush end", (event) => {
@@ -296,13 +289,18 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
     // Apply the brush to the brush layer
     brushLayer.call(brush);
 
+    // remove previous dots layer and create a new one
+    this.svg.select(".dots-layer").remove();
+    const dotsLayer = this.svg.append("g")
+            .attr("class", "dots-layer")
+            .attr("transform", `translate(${this.margin.left},${this.margin.top})`);
+
     // Render dots
     const dots = this.svg.select(".dots-layer").selectAll(".dotG")
         .data(data, (itemData) => itemData.index);
 
     dots.join(
         (enter) => {
-            console.log("entered in scatter plot")
             const itemG = enter.append("g")
                 .attr("class", "dotG")
                 .style("opacity", this.defaultOpacity)
@@ -334,27 +332,7 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
             this.updateDots(itemG, xAttribute, yAttribute);
         },
         (update) => {
-            console.log("update in scatter plot")
-
             update
-                .on("mouseenter", (event, itemData) => {
-                    tooltipDiv
-                        .style("opacity", 1)
-                        .html(
-                            `<strong>${xAttribute}:</strong> ${itemData[xAttribute]}<br>
-                            <strong>${yAttribute}:</strong> ${itemData[yAttribute]}<br>
-                            <strong>${colorAttribute}:</strong> ${itemData[colorAttribute]}`
-                        );
-                })
-                .on("mousemove", (event) => {
-                    const svgRect = this.container.getBoundingClientRect();
-                    tooltipDiv
-                        .style("left", `${event.clientX - svgRect.left + 10}px`)
-                        .style("top", `${event.clientY - svgRect.top - 20}px`);
-                })
-                .on("mouseleave", () => {
-                    tooltipDiv.style("opacity", 0);
-                })
                 .select("circle")
                 .transition()
                 .duration(this.transitionDuration)

@@ -47,23 +47,20 @@ class ParallelCoordinates {
             'Holiday': (a, b) => a === "No Holiday" ? -1 : 1, // No Holiday < Yes Holiday
             'FunctioningDay': (a, b) => a === "No" ? -1 : 1, // No < Yes
         };
-
-        // const colorScale = d3.scaleSequential(d3.interpolatePlasma)
-        //     .domain(d3.extent(this.data, d => d[this.color]));
-
+        
         // Handle color scale: check if color is categorical or continuous
         if (this.isCategorical(this.color)) {
             const orderedColorValues = Array.from(new Set(this.data.map(d => d[this.color])))
-                .sort();  // Sort the categorical values as needed
-
+            .sort();  // Sort the categorical values as needed
+            
             this.colorScale = d3.scaleOrdinal()
-                .domain(orderedColorValues)
-                .range(d3.schemeCategory10);  // Use a color scale (like d3.schemeCategory10)
+            .domain(orderedColorValues)
+            .range(d3.schemeCategory10);  // Use a color scale (like d3.schemeCategory10)
         } else {
             this.colorScale = d3.scaleSequential(d3.interpolatePlasma)
-                .domain(d3.extent(this.data, d => d[this.color]));
+            .domain(d3.extent(this.data, d => d[this.color]));
         }
-
+        
         // Create SVG or reuse the existing one
         let svg = d3.select(this.container).selectAll("svg")
             .data([null]); // Bind single data point for the container
