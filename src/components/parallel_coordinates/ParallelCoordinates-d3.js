@@ -14,6 +14,7 @@ class ParallelCoordinates {
         this.dispatch = dispatch;
         this.invertX = invertX || false;
         this.invertY = invertY || false;
+        this.colorscale = null;
 
         // Get the width and height from the container's bounding box
         const containerRect = container.getBoundingClientRect();
@@ -21,6 +22,11 @@ class ParallelCoordinates {
         this.height = containerRect.height - this.margin.top - this.margin.bottom;
 
         this.drawParallelCoordinates();
+    }
+
+    // Helper function to determine if the attribute is categorical
+    isCategorical(attribute) {
+        return ['Date', 'Seasons', 'Holiday', 'FunctioningDay'].includes(attribute);
     }
 
     drawParallelCoordinates(firstAxis, secondAxis, color, invertX, invertY) {
@@ -42,8 +48,21 @@ class ParallelCoordinates {
             'FunctioningDay': (a, b) => a === "No" ? -1 : 1, // No < Yes
         };
 
-        const colorScale = d3.scaleSequential(d3.interpolatePlasma)
-            .domain(d3.extent(this.data, d => d[this.color]));
+        // const colorScale = d3.scaleSequential(d3.interpolatePlasma)
+        //     .domain(d3.extent(this.data, d => d[this.color]));
+
+        // Handle color scale: check if color is categorical or continuous
+        if (this.isCategorical(this.color)) {
+            const orderedColorValues = Array.from(new Set(this.data.map(d => d[this.color])))
+                .sort();  // Sort the categorical values as needed
+
+            this.colorScale = d3.scaleOrdinal()
+                .domain(orderedColorValues)
+                .range(d3.schemeCategory10);  // Use a color scale (like d3.schemeCategory10)
+        } else {
+            this.colorScale = d3.scaleSequential(d3.interpolatePlasma)
+                .domain(d3.extent(this.data, d => d[this.color]));
+        }
 
         // Create SVG or reuse the existing one
         let svg = d3.select(this.container).selectAll("svg")
@@ -51,11 +70,12 @@ class ParallelCoordinates {
         svg = svg.enter()
             .append("svg")
             .merge(svg)
-            .attr("width", this.width + this.margin.left + this.margin.right)
-            .attr("height", this.height + this.margin.top + this.margin.bottom);
+            .attr("width", this.width)
+            .attr("height", this.height);
 
         const g = svg.selectAll("g.main-group")
             .data([null]); // Bind a single group
+            
         const mainGroup = g.enter()
             .append("g")
             .attr("class", "main-group")
@@ -120,6 +140,14 @@ class ParallelCoordinates {
                         // Axis with limited ticks
                         const axis = d3.axisLeft(scale)
                             .tickValues(sampledCategories); // Show only sampled categories as ticks
+
+                        if (attr == self.secondAxis) {
+                            // shift the tick values to the right
+                            axis.tickSizeOuter(0);
+                            axis.tickSizeInner(0);
+                            axis.tickPadding(-10);
+                        }
+                            
             
                         d3.select(this).call(axis);
                     }
@@ -171,7 +199,7 @@ class ParallelCoordinates {
             .merge(lines)
             .attr("d", d => lineGenerator(attributes.map(attr => d[attr])))
             .style("fill", "none")
-            .style("stroke", d => colorScale(d[this.color]))
+            .style("stroke", d => this.colorScale(d[this.color]))
             .style("opacity", d => {
                 return this.isBrushed(d) ? 0.4 : 0.02;
             });
