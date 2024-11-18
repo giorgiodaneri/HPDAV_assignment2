@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
 
 class ScatterplotD3 {
-  margin = { top: 40, right: 40, bottom: 50, left: 85 };
+  margin = { top: 40, right: 50, bottom: 50, left: 85 };
   size;
   width;
   height;
@@ -68,110 +68,115 @@ class ScatterplotD3 {
         });
 }
 
-  highlightSelectedItems(selectedItems) {
-    this.svg.select("g").selectAll(".dotG")
-      .data(selectedItems, (itemData) => itemData.index)
-      .join(
-        (enter) => enter,
-        (update) => this.changeBorderAndOpacity(update),
-        (exit) => exit.remove()
-      );
-  }
+// Helper function to determine if the attribute is categorical
+isCategorical(attribute) {
+    return ['Date', 'Seasons', 'Holiday', 'FunctioningDay'].includes(attribute);
+}
 
-    // Helper function to determine if the attribute is categorical
-    isCategorical(attribute) {
-        return ['Date', 'Seasons', 'Holiday', 'FunctioningDay'].includes(attribute);
+updateAxis(visData, xAttribute, yAttribute) {
+    const self = this;  // Capture the correct `this` context
+    
+    const categoricalOrder = {
+        'Date': (a, b) => d3.ascending(a, b),
+        'Seasons': (a, b) => d3.ascending(a, b),
+        'Holiday': (a, b) => a === "No Holiday" ? -1 : 1,
+        'FunctioningDay': (a, b) => a === "No" ? -1 : 1,
+    };
+
+    // Function to limit tick values to 10 equally spaced categories
+    const limitTicks = (values, tickCount = 8) => {
+        const tickInterval = Math.max(1, Math.floor(values.length / tickCount));
+        return values.filter((_, i) => i % tickInterval === 0);
+    };
+
+    // Update x-axis scale
+    if (self.isCategorical(xAttribute)) {
+        // Create an ordered set of x-values based on the specified order
+        const orderedXValues = Array.from(new Set(visData.map(d => d[xAttribute])))
+            .sort(categoricalOrder[xAttribute]);
+
+        // Limit to 10 equally spaced ticks
+        const sampledXCategories = limitTicks(orderedXValues);
+
+        // Apply d3.scaleBand() for categorical data
+        self.x = d3.scaleBand()
+            .domain(orderedXValues)  // domain directly from data values
+            .range([0, self.width]);
+
+        // Update x-axis with the correct scale and limited ticks
+        self.svg.select(".xAxisG")
+            .transition().duration(self.transitionDuration)
+            .call(d3.axisBottom(self.x).tickValues(sampledXCategories));
+    } else {
+        // Use d3.scaleLinear() for continuous data
+        self.x = d3.scaleLinear()
+            .domain([d3.min(visData, (item) => item[xAttribute]), d3.max(visData, (item) => item[xAttribute])])
+            .range([0, self.width]);
+
+        // Update x-axis with correct scale
+        self.svg.select(".xAxisG")
+            .transition().duration(self.transitionDuration)
+            .call(d3.axisBottom(self.x));
     }
 
-    updateAxis(visData, xAttribute, yAttribute) {
-        const categoricalOrder = {
-            'Date': (a, b) => d3.ascending(a, b),
-            'Seasons': (a, b) => d3.ascending(a, b),
-            'Holiday': (a, b) => a === "No Holiday" ? -1 : 1,
-            'FunctioningDay': (a, b) => a === "No" ? -1 : 1,
-        };
-    
-        // Update x-axis scale
-        if (this.isCategorical(xAttribute)) {
-            // Create an ordered set of x-values based on the specified order
-            const orderedXValues = Array.from(new Set(visData.map(d => d[xAttribute])))
-                .sort(categoricalOrder[xAttribute]);
-    
-            // Apply d3.scaleBand() for categorical data
-            this.x = d3.scaleBand()
-                .domain(orderedXValues)  // domain directly from data values
-                .range([0, this.width]);
-    
-            // Update x-axis with correct scale
-            this.svg.select(".xAxisG")
-                .transition().duration(this.transitionDuration)
-                .call(d3.axisBottom(this.x));
-        } else {
-            // Use d3.scaleLinear() for continuous data
-            this.x = d3.scaleLinear()
-                .domain([d3.min(visData, (item) => item[xAttribute]), d3.max(visData, (item) => item[xAttribute])])
-                .range([0, this.width]);
-    
-            // Update x-axis with correct scale
-            this.svg.select(".xAxisG")
-                .transition().duration(this.transitionDuration)
-                .call(d3.axisBottom(this.x));
-        }
-    
-        // Update y-axis scale
-        if (this.isCategorical(yAttribute)) {
-            // Create an ordered set of y-values based on the specified order
-            const orderedYValues = Array.from(new Set(visData.map(d => d[yAttribute])))
-                .sort(categoricalOrder[yAttribute]);
-    
-            // Apply d3.scaleBand() for categorical data
-            this.y = d3.scaleBand()
-                .domain(orderedYValues)  // domain directly from data values
-                .range([this.height, 0]);
-    
-            // Update y-axis with correct scale
-            this.svg.select(".yAxisG")
-                .transition().duration(this.transitionDuration)
-                .call(d3.axisLeft(this.y));
-        } else {
-            // Use d3.scaleLinear() for continuous data
-            this.y = d3.scaleLinear()
-                .domain([d3.min(visData, (item) => item[yAttribute]), d3.max(visData, (item) => item[yAttribute])])
-                .range([this.height, 0]);
-    
-            // Update y-axis with correct scale
-            this.svg.select(".yAxisG")
-                .transition().duration(this.transitionDuration)
-                .call(d3.axisLeft(this.y));
-        }
-    
-        // Add axis labels (ensure only one is present)
-        this.svg.select(".xAxisG").selectAll(".axis-label").remove();
-        this.svg.select(".yAxisG").selectAll(".axis-label").remove();
-    
-        // Add text to the x-axis
-        this.svg.select(".xAxisG")
-            .append("text")
-            .attr("class", "axis-label")
-            .attr("fill", "black")
-            .attr("x", this.width)
-            .attr("y", 30)
-            .attr("text-anchor", "end")
-            .text(xAttribute)
-            .style("font-size", "16px");
-    
-        // Add text to the y-axis
-        this.svg.select(".yAxisG")
-            .append("text")
-            .attr("class", "axis-label")
-            .attr("fill", "black")
-            .attr("transform", "rotate(-90)")
-            .attr("y", -65)
-            .attr("dy", "0.71em")
-            .attr("text-anchor", "end")
-            .text(yAttribute)
-            .style("font-size", "16px");
+    // Update y-axis scale
+    if (self.isCategorical(yAttribute)) {
+        // Create an ordered set of y-values based on the specified order
+        const orderedYValues = Array.from(new Set(visData.map(d => d[yAttribute])))
+            .sort(categoricalOrder[yAttribute]);
+
+        // Limit to 10 equally spaced ticks
+        const sampledYCategories = limitTicks(orderedYValues);
+
+        // Apply d3.scaleBand() for categorical data
+        self.y = d3.scaleBand()
+            .domain(orderedYValues)  // domain directly from data values
+            .range([self.height, 0]);
+
+        // Update y-axis with the correct scale and limited ticks
+        self.svg.select(".yAxisG")
+            .transition().duration(self.transitionDuration)
+            .call(d3.axisLeft(self.y).tickValues(sampledYCategories));
+    } else {
+        // Use d3.scaleLinear() for continuous data
+        self.y = d3.scaleLinear()
+            .domain([d3.min(visData, (item) => item[yAttribute]), d3.max(visData, (item) => item[yAttribute])])
+            .range([self.height, 0]);
+
+        // Update y-axis with correct scale
+        self.svg.select(".yAxisG")
+            .transition().duration(self.transitionDuration)
+            .call(d3.axisLeft(self.y));
     }
+
+    // Add axis labels (ensure only one is present)
+    self.svg.select(".xAxisG").selectAll(".axis-label").remove();
+    self.svg.select(".yAxisG").selectAll(".axis-label").remove();
+
+    // Add text to the x-axis
+    self.svg.select(".xAxisG")
+        .append("text")
+        .attr("class", "axis-label")
+        .attr("fill", "black")
+        .attr("x", self.width)
+        .attr("y", 40)
+        .attr("text-anchor", "end")
+        .text(xAttribute)
+        .style("font-size", "16px");
+
+    // Add text to the y-axis
+    self.svg.select(".yAxisG")
+        .append("text")
+        .attr("class", "axis-label")
+        .attr("fill", "black")
+        .attr("transform", "rotate(-90)")
+        .attr("y", -75)
+        .attr("dy", "0.71em")
+        .attr("text-anchor", "end")
+        .text(yAttribute)
+        .style("font-size", "16px");
+}
+
     
 // Check if a data point is inside the brushed data by iterating over brushedData explicitly
 isBrushed(d) {
@@ -225,8 +230,18 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
 
     this.updateAxis(data, xAttribute, yAttribute);
 
-    this.colorScale = d3.scaleSequential(d3.interpolateTurbo)
-        .domain(d3.extent(data, (d) => d[colorAttribute]));
+    // Handle color scale: check if colorAttribute is categorical or continuous
+    if (this.isCategorical(colorAttribute)) {
+        const orderedColorValues = Array.from(new Set(data.map(d => d[colorAttribute])))
+            .sort();  // Sort the categorical values as needed
+
+        this.colorScale = d3.scaleOrdinal()
+            .domain(orderedColorValues)
+            .range(d3.schemeCategory10);  // Use a color scale (like d3.schemeCategory10)
+    } else {
+        this.colorScale = d3.scaleSequential(d3.interpolateTurbo)
+            .domain(d3.extent(data, (d) => d[colorAttribute]));
+    }
 
     this.sizeScale = d3.scaleLinear()
         .domain(d3.extent(data, (d) => d[sizeAttribute]))
@@ -287,10 +302,11 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
 
     dots.join(
         (enter) => {
+            console.log("entered in scatter plot")
             const itemG = enter.append("g")
                 .attr("class", "dotG")
                 .style("opacity", this.defaultOpacity)
-                .on("mouseover", (event, itemData) => {
+                .on("mouseenter", (event, itemData) => {
                     tooltipDiv
                         .style("opacity", 1)
                         .html(
@@ -305,7 +321,7 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
                         .style("left", `${event.clientX - svgRect.left + 10}px`)
                         .style("top", `${event.clientY - svgRect.top - 20}px`);
                 })
-                .on("mouseout", () => {
+                .on("mouseleave", () => {
                     tooltipDiv.style("opacity", 0);
                 });
 
@@ -318,8 +334,10 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
             this.updateDots(itemG, xAttribute, yAttribute);
         },
         (update) => {
+            console.log("update in scatter plot")
+
             update
-                .on("mouseover", (event, itemData) => {
+                .on("mouseenter", (event, itemData) => {
                     tooltipDiv
                         .style("opacity", 1)
                         .html(
@@ -334,7 +352,7 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
                         .style("left", `${event.clientX - svgRect.left + 10}px`)
                         .style("top", `${event.clientY - svgRect.top - 20}px`);
                 })
-                .on("mouseout", () => {
+                .on("mouseleave", () => {
                     tooltipDiv.style("opacity", 0);
                 })
                 .select("circle")

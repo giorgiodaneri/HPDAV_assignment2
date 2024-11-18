@@ -94,18 +94,45 @@ class ParallelCoordinates {
         const axes = mainGroup.selectAll(".axis")
             .data(attributes);
 
-        axes.enter()
-            .append("g")
-            .attr("class", "axis")
-            .merge(axes)
-            .attr("transform", d => `translate(${xScale(d)},0)`)
-            .each(function (d) {
-                if (d === this.secondAxis) {
-                    d3.select(this).call(d3.axisRight(yScales[d])); // Right-aligned axis for third axis
-                } else {
-                    d3.select(this).call(d3.axisLeft(yScales[d]));
-                }
-            });
+            const self = this; // Capture the class context
+
+            axes.enter()
+                .append("g")
+                .attr("class", "axis")
+                .merge(axes)
+                .attr("transform", d => `translate(${xScale(d)},0)`)
+                .each(function (attr) {
+                    if (categoricalOrder[attr]) {
+                        // Handle categorical attributes
+                        const uniqueCategories = Array.from(new Set(self.data.map(d => d[attr]))); // Use self.data
+                        uniqueCategories.sort(categoricalOrder[attr]);
+            
+                        // Limit to 10 equally spaced tick values
+                        const tickCount = 10;
+                        const tickInterval = Math.max(1, Math.floor(uniqueCategories.length / tickCount));
+                        const sampledCategories = uniqueCategories.filter((_, i) => i % tickInterval === 0);
+            
+                        // Create a scale with full categories for data points
+                        const scale = d3.scalePoint()
+                            .domain(uniqueCategories)
+                            .range([self.height, 0]); // Use self.height
+            
+                        // Axis with limited ticks
+                        const axis = d3.axisLeft(scale)
+                            .tickValues(sampledCategories); // Show only sampled categories as ticks
+            
+                        d3.select(this).call(axis);
+                    }
+                    else {
+                        if (attr === self.secondAxis) {
+                            d3.select(this).call(d3.axisRight(yScales[attr])); // Right-aligned axis for third axis
+                        } else {
+                            d3.select(this).call(d3.axisLeft(yScales[attr]));
+                        }
+                    }
+                });
+            
+
 
         axes.exit().remove();
 
