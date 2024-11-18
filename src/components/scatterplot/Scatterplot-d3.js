@@ -214,6 +214,8 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
 
     // Handle color scale: check if colorAttribute is categorical
     if (this.isCategorical(colorAttribute)) {
+        // First select the unique values by building a set from the attribute values
+        // Then construct an array from it and sort the values to ensure consistent color assignment
         const orderedColorValues = Array.from(new Set(data.map(d => d[colorAttribute])))
             .sort();  
         this.colorScale = d3.scaleOrdinal()
@@ -283,7 +285,7 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
 
     // Remove previous dots layer and create a new one
     this.svg.select(".dots-layer").remove();
-    const dotsLayer = this.svg.append("g")
+    this.svg.append("g")
             .attr("class", "dots-layer")
             .attr("transform", `translate(${this.margin.left},${this.margin.top})`);
 
