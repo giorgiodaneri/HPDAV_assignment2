@@ -58,7 +58,8 @@ class ScatterplotD3 {
             const yPosition = this.y(item[yAttribute]);
 
             // Handle categorical attributes as discrete positions
-            return `translate(${xPosition},${yPosition})`;
+            return `translate(${this.isCategorical(xAttribute) ? xPosition + this.x.bandwidth() / 2 : xPosition},
+                            ${this.isCategorical(yAttribute) ? yPosition + this.y.bandwidth() / 2 : yPosition})`;
         })
         .style("opacity", this.defaultOpacity);
         

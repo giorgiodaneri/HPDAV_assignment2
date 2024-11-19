@@ -145,6 +145,16 @@ class ParallelCoordinates {
                     const axis = d3.axisLeft(scale)
                         .tickValues(sampledCategories); 
 
+                    // Reverse the tick labels if the axis is inverted
+                    if ((attr === self.firstAxis && self.invertX) || (attr === self.secondAxis && self.invertY)) {
+                        axis.scale(scale.copy().range([0, self.height]));  
+                        d3.select(this).call(axis);
+                        d3.select(this).selectAll(".tick text")
+                            .attr("transform", "scale(1, 1)");
+                    } else {
+                        d3.select(this).call(axis);
+                    }
+
                     // Adjust the axis appearance, adding some padding to avoid
                     // The text to overlap with the axis line and the plot
                     if (attr === self.secondAxis) {
