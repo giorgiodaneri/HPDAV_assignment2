@@ -11,6 +11,7 @@ class ScatterplotD3 {
   colorAttribute;
   colorScale;
   sizeScale;
+  brushedData = [];
   brushedDataParallelCoords;
   defaultOpacity = 0.3;
   transitionDuration = 1000;
@@ -49,7 +50,7 @@ class ScatterplotD3 {
   }
 
   // Function to update the position of the dots and their opacity
-  updateDots(selection, xAttribute, yAttribute) {
+  updateDots(selection, xAttribute, yAttribute, colorAttribute, brushedDataParallelCoords) {
     selection
         .transition().duration(this.transitionDuration)
         .attr("transform", (item) => {
@@ -59,9 +60,26 @@ class ScatterplotD3 {
             // Handle categorical attributes as discrete positions
             return `translate(${xPosition},${yPosition})`;
         })
-        .style("opacity", d => {
-            return this.isBrushed(d) ? 0.8 : 0.3;
-        });
+        .style("opacity", this.defaultOpacity);
+        
+        if(brushedDataParallelCoords.brushedDataParallelCoords.length > 0) {
+            selection
+            .attr("fill", d => {
+                return this.isBrushedParallelCoords(d) ? this.colorScale(d[colorAttribute]) : "grey";
+            });
+        }
+        else {
+            selection
+            .attr("fill", d => this.colorScale(d[colorAttribute]));
+        }
+        
+        if(this.brushedData.length > 0) {
+            selection
+            .attr("fill", d => {
+                return this.isBrushed(d) ? this.colorScale(d[colorAttribute]) : "grey";
+                });
+        }
+
 }
 
 // Function to determine if the attribute is categorical
@@ -161,12 +179,13 @@ updateAxis(visData, xAttribute, yAttribute) {
 }
 
     
-// Function to check if a data point is inside the brushed data
-isBrushed(d) {
-    // Ensure brushedData is defined and contains elements before checking
+// Function to check if a data point is inside the brushed data of the parallel coordinates plot
+isBrushedParallelCoords(d) {
+    // Ensure brushedDataParallelCoords is defined and contains elements before checking
     if (!this.brushedDataParallelCoords || this.brushedDataParallelCoords.length === 0) {
         return false; 
     }
+    
     // Get unique identifier for the current data point
     const identifier = d.index;
     for (let i = 0; i < this.brushedDataParallelCoords.brushedDataParallelCoords.length; i++) {
@@ -177,6 +196,23 @@ isBrushed(d) {
   }
 
   return false;
+}
+
+// Function to check if a data point is inside the brushed data of this plot
+isBrushed(d) {
+    // Ensure brushedData is defined and contains elements before checking
+    if (!this.brushedData || this.brushedData.length === 0) {
+        return false;
+    }
+    // Get unique identifier for the current data point
+    const identifier = d.index;
+    for (let i = 0; i < this.brushedData.length; i++) {
+        const brushed = this.brushedData[i];
+        if (brushed.index === identifier) {
+            return true;
+        }
+    }
+    return false;
 }
 
 clearBrush() {
@@ -244,8 +280,8 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
     const brushLayer = this.svg.append("g")
         .attr("class", "brush-layer")
         .attr("transform", `translate(${this.margin.left},${this.margin.top})`);
-
-    const brush = d3.brush()
+    
+        const brush = d3.brush()
         .extent([[0, 0], [this.width, this.height]])
         .on("start brush end", (event) => {
             const selection = event.selection;
@@ -259,12 +295,19 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
                     return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;
                 });
 
+                // Remove all items inside brushedData
+                this.brushedData = [];
+                // Add the selected data to the brushedData array
+                selectedData.forEach(d => this.brushedData.push(d));
+                
+                // Change the fill color of the selected data points with the color scale
+                // While all the others are gray
                 this.svg.selectAll(".dotG")
-                    .style("opacity", d => {
-                        const cx = this.x(d[xAttribute]);
-                        const cy = this.y(d[yAttribute]);
-                        return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1 ? 0.8 : 0.3;
+                    .attr("fill", d => {
+                        return x0 <= this.x(d[xAttribute]) && this.x(d[xAttribute]) <= x1 && y0 <= this.y(d[yAttribute]) && this.y(d[yAttribute]) <= y1 
+                        ? this.colorScale(d[colorAttribute]) : "grey";
                     });
+
                 // Dispatch the selected data to the controller, which will update the store
                 // And therefore also the other plot
                 if (event.type === "end") {
@@ -273,10 +316,12 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
             } else {
                 // If no selection, reset opacity and dispatch empty array to the controller
                 this.svg.selectAll(".dotG")
-                    .style("opacity", 0.3);
+                    .attr("fill", "grey");
 
                 if (event.type === "end") {
                     controllerMethods.handleOnBrush([]);
+                    this.svg.selectAll(".dotG")
+                    .attr("fill", d  => this.colorScale(d[colorAttribute]));
                 }
             }
         });
@@ -323,9 +368,17 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
                 .attr("class", "dotCircle")
                 .attr("r", this.circleRadius)
                 .attr("r", d => this.sizeScale(d[sizeAttribute]))
-                .attr("fill", d => this.colorScale(d[colorAttribute]));
+                // If brushedDataParallelCoords is not empty, set the fill color to grey
+                if(brushedDataParallelCoords.brushedDataParallelCoords.length === 0) {
+                    itemG
+                    .attr("fill", d => this.colorScale(d[colorAttribute]));
+                }
+                else {
+                    // Make sure that all previously brushed data points are not highlighted anymore
+                    this.brushedData = [];
+                }
 
-            this.updateDots(itemG, xAttribute, yAttribute);
+            this.updateDots(itemG, xAttribute, yAttribute, colorAttribute, brushedDataParallelCoords);
         },
         (update) => {
             update
@@ -333,9 +386,12 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
                 .transition()
                 .duration(this.transitionDuration)
                 .attr("r", d => this.sizeScale(d[sizeAttribute]))
-                .attr("fill", d => this.colorScale(d[colorAttribute]));
+                if(brushedDataParallelCoords.brushedDataParallelCoords.length === 0) {
+                    update
+                    .attr("fill", d => this.colorScale(d[colorAttribute]));
+                }
 
-            this.updateDots(update, xAttribute, yAttribute);
+            this.updateDots(update, xAttribute, yAttribute, colorAttribute, brushedDataParallelCoords);
         },
         (exit) => {
             exit.remove();

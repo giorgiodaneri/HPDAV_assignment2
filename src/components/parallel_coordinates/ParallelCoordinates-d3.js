@@ -89,7 +89,12 @@ class ParallelCoordinates {
                 uniqueCategories.sort(categoricalOrder[attr]);
                 yScales[attr] = d3.scalePoint()
                     .domain(uniqueCategories)
-                    .range([this.height, 0]);
+                    .range(
+                        (attr === this.firstAxis && this.invertX) ||
+                        (attr === this.secondAxis && this.invertY) 
+                            ? [0, this.height] // Inverted range for the axis
+                            : [this.height, 0] // Default range
+                    );
             } else {
                 // For continuous variables, use a linear scale
                 yScales[attr] = d3.scaleLinear()
@@ -103,12 +108,13 @@ class ParallelCoordinates {
             }
         });
 
+        // Define the x axis and add some padding to its borders
         const xScale = d3.scalePoint()
             .range([0, this.width])
-            .padding(0.5)
+            .padding(0.3)
             .domain(attributes);
-
-        // Handle axes (enter, update, exit)
+ 
+        // Get a reference to the axes
         const axes = mainGroup.selectAll(".axis")
             .data(attributes);
 
@@ -177,7 +183,7 @@ class ParallelCoordinates {
 
         // Adjust tick size
         mainGroup.selectAll(".axis").selectAll("text").style("font-size", "14px");
-
+        
         // Generate the lines corresponding to the data values
         const lineGenerator = d3.line()
             .curve(d3.curveBasis)
@@ -213,11 +219,10 @@ class ParallelCoordinates {
                     const firstBrushValid = !brushSelections.firstAxis ||
                         (yScale[this.firstAxis](d[this.firstAxis]) >= brushSelections.firstAxis[0] &&
                         yScale[this.firstAxis](d[this.firstAxis]) <= brushSelections.firstAxis[1]);
-                    const thirdBrushValid = !brushSelections.secondAxis ||
+                    const secondBrushValid = !brushSelections.secondAxis ||
                         (yScale[this.secondAxis](d[this.secondAxis]) >= brushSelections.secondAxis[0] &&
                         yScale[this.secondAxis](d[this.secondAxis]) <= brushSelections.secondAxis[1]);
-
-                    return firstBrushValid && thirdBrushValid;
+                    return firstBrushValid && secondBrushValid;
                 });
 
                 // Update the opacity of the lines that correspond to the brushed data
