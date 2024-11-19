@@ -19,16 +19,12 @@ export const getSeoulBikeData = createAsyncThunk('seoulBikeData/fetchData', asyn
 export const dataSetSlice = createSlice({
   name: 'dataSet',
   initialState: {
-    data: [], 
-    brushedData: [],
+    data: []
   },
   
   reducers: {
     setData: (state, action) => {
       state.data = action.payload;
-    },
-    setBrushedData: (state, action) => {
-      return action.payload.brushedData;
     }
   },
   extraReducers: builder => {
@@ -38,6 +34,6 @@ export const dataSetSlice = createSlice({
   }
 })
 
-export const { setData, setBrushedData } = dataSetSlice.actions;
+export const { setData } = dataSetSlice.actions;
 
 export default dataSetSlice.reducer;
