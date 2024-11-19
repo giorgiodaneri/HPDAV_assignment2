@@ -8,19 +8,16 @@ class ScatterplotD3 {
   svg;
   x;
   y;
-  colorAttribute;
-  colorScale;
   sizeScale;
   brushedData = [];
-  brushedDataParallelCoords;
+  brushedDataParallelCoords = [];
   defaultOpacity = 0.3;
-  transitionDuration = 1000;
+  transitionDuration = 2000;
   circleRadius = 3;
 
   constructor(container) {
     this.container = container;
     this.svg = d3.select(container).append("svg");
-    this.brushedDataParallelCoords = [];
   }
 
   // Function to create the scatterplot, the svg element and the axes
@@ -52,7 +49,6 @@ class ScatterplotD3 {
   // Function to update the position of the dots and their opacity
   updateDots(selection, xAttribute, yAttribute, colorAttribute, brushedDataParallelCoords) {
     selection
-        .transition().duration(this.transitionDuration)
         .attr("transform", (item) => {
             const xPosition = this.x(item[xAttribute]);
             const yPosition = this.y(item[yAttribute]);
@@ -217,8 +213,8 @@ isBrushed(d) {
 }
 
 clearBrush() {
-  this.svg.select(".brush").call(d3.brush().move, null); // Clear the brush programmatically
-  this.svg.selectAll(".dotG").style("opacity", this.defaultOpacity); // Reset dot opacity
+  this.svg.select(".brush").call(d3.brush().move, null);
+  this.svg.selectAll(".dotG").style("opacity", this.defaultOpacity); 
 }
 
 renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, brushedDataParallelCoords, controllerMethods) {
@@ -277,6 +273,7 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
     }
 
     // Clear previous brush and create a new brush layer
+    this.svg.select(".dots-layer").remove();
     this.svg.select(".brush-layer").remove();
     const brushLayer = this.svg.append("g")
         .attr("class", "brush-layer")
@@ -329,12 +326,10 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
     // Apply the brush to the its layer
     brushLayer.call(brush);
 
-    // Remove previous dots layer and create a new one
-    this.svg.select(".dots-layer").remove();
+    // Create ad hoc layer for the dots
     this.svg.append("g")
             .attr("class", "dots-layer")
             .attr("transform", `translate(${this.margin.left},${this.margin.top})`);
-
     // Render dots
     const dots = this.svg.select(".dots-layer").selectAll(".dotG")
         .data(data, (itemData) => itemData.index);
@@ -384,8 +379,6 @@ renderScatterplot(data, xAttribute, yAttribute, colorAttribute, sizeAttribute, b
         (update) => {
             update
                 .select("circle")
-                .transition()
-                .duration(this.transitionDuration)
                 .attr("r", d => this.sizeScale(d[sizeAttribute]))
                 if(brushedDataParallelCoords.brushedDataParallelCoords.length === 0) {
                     update
