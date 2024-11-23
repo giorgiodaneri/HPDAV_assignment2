@@ -25,7 +25,7 @@ function ControlBarRight() {
     // Extract column names when data is loaded so that they are properly displayed 
     useEffect(() => {
         if (data.length > 0) {
-            const columns = Object.keys(data[0]);
+            const columns = Object.keys(data[0]).filter((name) => name !== "index");
             setColumnNames(columns);
         }
     }, [data]);
