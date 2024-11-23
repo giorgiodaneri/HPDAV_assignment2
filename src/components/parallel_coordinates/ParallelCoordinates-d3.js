@@ -42,7 +42,20 @@ class ParallelCoordinates {
         // Categorical sorting (lexicographic for Date, Season and binary for Holiday and FunctioningDay)
         // Necessary in order to correctly display the axes and the colorscale
         const categoricalOrder = {
-            'Date': (a, b) => d3.ascending(a, b), 
+            'Date': (a, b) => {
+                // Extract year, month, day from the string
+                const parseDate = (dateStr) => {
+                    // Split and convert to numbers
+                    const [day, month, year] = dateStr.split("/").map(Number); 
+                    return { year, month, day };
+                };
+                const dateA = parseDate(a);
+                const dateB = parseDate(b);
+                // Compare year first, then month, then day
+                return d3.ascending(dateA.year, dateB.year) || 
+                    d3.ascending(dateA.month, dateB.month) || 
+                    d3.ascending(dateA.day, dateB.day);
+                },
             'Seasons': (a, b) => d3.ascending(a, b),
             'Holiday': (a, b) => a === "No Holiday" ? -1 : 1, // No Holiday < Yes Holiday
             'FunctioningDay': (a, b) => a === "No" ? -1 : 1, // No < Yes
